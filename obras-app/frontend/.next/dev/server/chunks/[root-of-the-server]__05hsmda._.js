@@ -115,40 +115,43 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$serv
 ;
 ;
 async function proxy(request) {
-    let response = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$middleware$5d$__$28$ecmascript$29$__["NextResponse"].next({
-        request
-    });
+    const pendingCookies = [];
     const supabase = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$supabase$2f$ssr$2f$dist$2f$module$2f$createServerClient$2e$js__$5b$middleware$5d$__$28$ecmascript$29$__["createServerClient"])(("TURBOPACK compile-time value", "https://xvrxcictjdyqbuukhlfh.supabase.co"), ("TURBOPACK compile-time value", "sb_publishable_Uj-RePjXYpS-Q04H5phreQ_RRyujPL7"), {
         cookies: {
             getAll () {
                 return request.cookies.getAll();
             },
             setAll (cookiesToSet) {
-                cookiesToSet.forEach(({ name, value })=>request.cookies.set(name, value));
-                response = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$middleware$5d$__$28$ecmascript$29$__["NextResponse"].next({
-                    request
-                });
-                cookiesToSet.forEach(({ name, value, options })=>response.cookies.set(name, value, options));
+                pendingCookies.push(...cookiesToSet);
             }
         }
     });
     const { data: { user } } = await supabase.auth.getUser();
-    const isLoginPage = request.nextUrl.pathname === "/login";
-    const isWelcomePage = request.nextUrl.pathname === "/welcome";
-    if (!user && !isLoginPage && !isWelcomePage) {
+    const { pathname, search } = request.nextUrl;
+    const isLoginRoute = pathname.startsWith("/login");
+    const response = !user && !isLoginRoute ? (()=>{
         const loginUrl = request.nextUrl.clone();
         loginUrl.pathname = "/login";
-        loginUrl.searchParams.set("next", request.nextUrl.pathname);
+        loginUrl.searchParams.set("next", `${pathname}${search}`);
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$middleware$5d$__$28$ecmascript$29$__["NextResponse"].redirect(loginUrl);
-    }
-    if (user && isLoginPage) {
-        return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$middleware$5d$__$28$ecmascript$29$__["NextResponse"].redirect(new URL("/welcome", request.url));
-    }
+    })() : user && isLoginRoute ? (()=>{
+        const homeUrl = request.nextUrl.clone();
+        homeUrl.pathname = "/";
+        homeUrl.search = "";
+        return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$middleware$5d$__$28$ecmascript$29$__["NextResponse"].redirect(homeUrl);
+    })() : __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$middleware$5d$__$28$ecmascript$29$__["NextResponse"].next({
+        request: {
+            headers: request.headers
+        }
+    });
+    pendingCookies.forEach(({ name, value, options })=>{
+        response.cookies.set(name, value, options);
+    });
     return response;
 }
 const config = {
     matcher: [
-        "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"
+        "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)"
     ]
 };
 }),

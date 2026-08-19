@@ -41,6 +41,9 @@ body {
   min-height: 100svh;
   overflow: hidden;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .welcome-shell::before {
@@ -265,7 +268,19 @@ body {
 .extra-payment-history label { align-items: center; display: flex; flex-wrap: wrap; gap: .4rem; }
 .extra-payment-history input { background: var(--paper); border: 1px solid var(--line); border-radius: .35rem; padding: .35rem; width: 5.5rem; }
 .extra-payment-history label button { background: var(--ink); border: 0; border-radius: .35rem; color: var(--paper); cursor: pointer; font-size: .7rem; padding: .42rem .6rem; }
-.received-metric { display: grid; gap: .45rem; }
+.received-metric {
+  background: linear-gradient(145deg, #edf6dc, #ffffff);
+  border: 1px solid var(--line);
+  border-radius: .8rem;
+  display: grid;
+  gap: .55rem;
+  padding: .85rem .9rem;
+}
+.received-metric-top { align-items: baseline; display: flex; gap: .5rem; justify-content: space-between; }
+.received-meter { background: var(--surface-strong); border-radius: 99px; height: .55rem; overflow: hidden; }
+.received-meter span { background: linear-gradient(90deg, #527b42, #9fc7e4); border-radius: inherit; display: block; height: 100%; }
+.received-metric-foot { display: flex; flex-wrap: wrap; gap: .35rem .75rem; justify-content: space-between; }
+.received-metric-foot span { color: var(--muted); font-size: .7rem; font-weight: 700; }
 .received-toggle { align-items: center; align-self: flex-end; background: var(--ink); border: 1px solid rgba(37,51,58,.15); border-radius: .5rem; box-shadow: 0 2px 5px rgba(38,83,104,.16); color: var(--paper); cursor: pointer; display: inline-flex; font-size: 1rem; height: 1.9rem; justify-content: center; width: 1.9rem; }
 .received-toggle:hover { background: #527b42; transform: translateY(-1px); }
 .work-payment-history { border-top: 1px solid var(--line); display: grid; gap: .55rem; grid-column: 1 / -1; margin-top: .15rem; padding-top: .8rem; }
@@ -277,6 +292,9 @@ body {
 @media (max-width: 640px) {
   .extras-list-summary { grid-template-columns: 1fr; }
   .extras-list-summary > div + div { border-left: 0; border-top: 1px solid var(--line); padding-left: 0; padding-top: .55rem; }
+  .received-metric { border-radius: 1rem; padding: .95rem 1rem; }
+  .received-metric-top { align-items: flex-start; flex-direction: column; gap: .2rem; }
+  .received-metric-foot { flex-direction: column; gap: .2rem; }
 }
 .detail-actions-dock { background: var(--paper); border: 1px solid var(--ink); border-radius: .8rem; bottom: 1.5rem; display: block; max-width: 24rem; padding: .7rem; position: fixed; right: 1.5rem; z-index: 40; }.detail-upload-button { background: var(--orange); border: 1px solid var(--ink); border-radius: 99px; color: var(--ink); cursor: pointer; display: inline-flex; font-size: .75rem; font-weight: 800; padding: .7rem .9rem; }.detail-upload-button input { display: none; }.payment-history-dock { background: var(--surface); border: 1px solid var(--line); border-radius: .8rem; display: grid; gap: .7rem; margin-top: .7rem; padding: .8rem; }.payment-history-dock > strong { font-size: .75rem; }.payment-history-item { border-top: 1px solid var(--line); display: grid; gap: .4rem; padding-top: .6rem; }.payment-history-item > span { font-size: .75rem; font-weight: 800; }.payment-history-item > div { display: grid; gap: .25rem; }.payment-history-item small { color: var(--muted); font-size: .7rem; }.payment-history-item label { align-items: center; color: var(--muted); display: flex; flex-wrap: wrap; font-size: .68rem; gap: .35rem; }.payment-history-item input { background: var(--paper); border: 1px solid var(--line); border-radius: .35rem; padding: .3rem; width: 5rem; }.payment-history-item button { background: var(--ink); border: 0; border-radius: .35rem; color: var(--paper); cursor: pointer; font-size: .68rem; padding: .35rem .5rem; }
 .welcome-dashboard { background: var(--paper); display: flex; flex-direction: column; min-height: 100svh; overflow: hidden; padding: 2rem clamp(1.5rem, 5vw, 5rem); position: relative; }.welcome-dashboard::before { background-image: radial-gradient(rgba(23,34,30,.12) 1px, transparent 1px); background-size: 18px 18px; content: ""; inset: 0; opacity: .45; pointer-events: none; position: absolute; }.welcome-topbar, .welcome-content, .welcome-footer { position: relative; z-index: 1; }.welcome-topbar { align-items: flex-start; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; padding-bottom: 1.25rem; }.welcome-tag { color: var(--muted); font-size: .68rem; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }.welcome-content { margin: auto 0; max-width: 55rem; padding: 5rem 0; }.welcome-content h1 { font-size: clamp(3.2rem, 8vw, 8rem); letter-spacing: -.09em; line-height: .86; margin: .8rem 0 1.5rem; max-width: 50rem; }.welcome-content > p:not(.eyebrow) { color: var(--muted); font-size: clamp(1rem, 2vw, 1.35rem); max-width: 32rem; }.welcome-cta { align-items: center; background: var(--ink); border: 0; border-radius: 99px; color: var(--paper); cursor: pointer; display: inline-flex; font: inherit; font-size: .85rem; font-weight: 800; gap: 1.5rem; margin-top: 2rem; padding: 1rem 1.2rem; }.welcome-cta span { color: var(--lime); font-size: 1.25rem; }.welcome-illustration { bottom: 7rem; color: var(--orange); font-size: clamp(8rem, 22vw, 20rem); line-height: .8; opacity: .95; pointer-events: none; position: absolute; right: clamp(2rem, 10vw, 12rem); transform: rotate(-5deg); z-index: 0; }.welcome-illustration i { border: 1px solid var(--ink); border-radius: 50%; height: 18rem; position: absolute; right: -5rem; top: -4rem; width: 18rem; }.welcome-illustration i:nth-child(2) { height: 26rem; right: -9rem; top: -8rem; width: 26rem; }.welcome-illustration i:nth-child(3) { height: 34rem; right: -13rem; top: -12rem; width: 34rem; }.welcome-footer { border-top: 1px solid var(--line); color: var(--muted); display: flex; font-size: .7rem; font-weight: 700; justify-content: space-between; padding-top: 1rem; }.welcome-footer span:first-child { color: var(--ink); }
@@ -497,17 +515,17 @@ body {
 }
 
 /* Login: mais leve, colorido e coerente com o painel. */
-.auth-shell { align-items: center; background-color: #31515e; background-image: linear-gradient(115deg, rgba(20,45,57,.86) 0%, rgba(40,78,92,.69) 48%, rgba(82,123,66,.42) 100%), url("/dimoprop-house.jpg"); display: flex; isolation: isolate; justify-content: center; min-height: 100svh; padding: clamp(1.25rem, 5vw, 5rem); position: relative; }
+.auth-shell { background-color: #31515e; background-image: linear-gradient(115deg, rgba(20,45,57,.86) 0%, rgba(40,78,92,.69) 48%, rgba(82,123,66,.42) 100%), url("/dimoprop-house.jpg"); display: grid; min-height: 100dvh; place-items: center; padding: clamp(1rem, 3vw, 2rem); position: relative; }
 .auth-shell::before { background: radial-gradient(circle at 82% 20%, rgba(207,231,162,.45), transparent 0 18%), radial-gradient(circle at 77% 76%, rgba(159,199,228,.42), transparent 0 20%); content: ""; inset: 0; pointer-events: none; position: absolute; z-index: -1; }
 .auth-atmosphere { bottom: 0; color: rgba(243,248,248,.92); font-family: var(--font-display), sans-serif; font-size: clamp(3rem, 10vw, 8.5rem); font-weight: 800; letter-spacing: -.1em; line-height: .8; overflow: hidden; pointer-events: none; position: absolute; right: clamp(1.5rem, 8vw, 8rem); text-align: right; top: 0; width: min(49vw, 50rem); }
 .auth-atmosphere > span { bottom: clamp(3rem, 10vh, 8rem); opacity: .2; position: absolute; right: 0; transform: rotate(-8deg); }
 .auth-atmosphere i { border: 1px solid rgba(207,231,162,.42); border-radius: 50%; display: block; height: clamp(13rem, 28vw, 26rem); position: absolute; right: -8rem; top: 12%; width: clamp(13rem, 28vw, 26rem); }
 .auth-atmosphere i:nth-of-type(2) { height: clamp(18rem, 37vw, 34rem); right: -12rem; top: 6%; width: clamp(18rem, 37vw, 34rem); }
 .auth-atmosphere i:nth-of-type(3) { height: clamp(24rem, 46vw, 42rem); right: -16rem; top: -2%; width: clamp(24rem, 46vw, 42rem); }
-.auth-card { animation: soft-rise 500ms ease both; backdrop-filter: blur(14px); background: rgba(243,248,248,.94); border: 1px solid rgba(255,255,255,.75); border-radius: 1.5rem; box-shadow: 0 2rem 4.5rem rgba(10,33,43,.32); margin: 0 auto; max-width: 30rem; padding: clamp(1.7rem, 4vw, 3rem); width: min(100%, 30rem); z-index: 1; }
-.auth-brand { background: linear-gradient(135deg, #e1f0f4, #edf6dc); border: 1px solid rgba(38,83,104,.13); border-radius: .9rem; margin-bottom: 2rem; padding: .8rem 1rem; }
-.auth-brand .company-logo { max-width: 13rem; }
-.auth-heading { text-align: left; }
+.auth-card { place-items: center; animation: soft-rise 500ms ease both; backdrop-filter: blur(14px); background: rgba(243,248,248,.94); border: 1px solid rgba(255,255,255,.75); border-radius: 1.5rem; box-shadow: 0 2rem 4.5rem rgba(10,33,43,.32); margin: 0 auto; max-width: 30rem; padding: clamp(1.7rem, 4vw, 3rem); width: min(100%, 30rem); z-index: 1; }
+.auth-brand { align-items: center; background: linear-gradient(135deg, #e1f0f4, #edf6dc); border: 1px solid rgba(38,83,104,.13); border-radius: .9rem; display: flex; justify-content: center; margin-bottom: 2rem; padding: .8rem 1rem; text-align: center; }
+.auth-brand .company-logo { display: block; margin: 0 auto; max-width: 13rem; }
+.auth-heading { text-align: center; }
 .auth-heading .eyebrow { background: #dcefd8; border-radius: 99px; color: #317d57; display: inline-block; letter-spacing: .08em; padding: .38rem .65rem; }
 .auth-heading h1 { color: var(--ink); font-size: clamp(2.4rem, 4vw, 3.65rem); margin: .8rem 0 .9rem; }
 .auth-heading > p:last-child { color: #587078; font-size: .9rem; max-width: 24rem; }
@@ -530,12 +548,12 @@ body {
 
 @media (max-width: 560px) {
   .auth-shell {
-    align-items: flex-start;
+    align-items: center;
     background-image: linear-gradient(160deg, rgba(16,35,43,.56), rgba(45,82,92,.2) 45%, rgba(18,38,44,.46)), url("/dimoprop-house.jpg");
-    height: auto;
+    height: 100dvh;
     justify-content: center;
-    min-height: 100svh;
-    overflow-y: auto;
+    min-height: 100dvh;
+    overflow: hidden;
     padding: 1.05rem .95rem;
   }
 
@@ -550,7 +568,7 @@ body {
     border: 1px solid rgba(255,255,255,.9);
     border-radius: 1rem;
     box-shadow: 0 18px 45px rgba(8,24,34,.26);
-    margin: .35rem auto 1.25rem;
+    margin: 0;
     max-width: 20.5rem;
     padding: .95rem;
   }
@@ -559,9 +577,10 @@ body {
     background: rgba(255,255,255,.58);
     border-color: rgba(255,255,255,.74);
     border-radius: .7rem;
-    justify-content: flex-start;
+    justify-content: center;
     margin-bottom: .9rem;
     padding: .55rem .65rem;
+    width: 100%;
   }
 
   .auth-brand .company-logo {
@@ -709,5 +728,233 @@ body {
     font-size: .62rem;
     height: 1.85rem;
     width: 1.85rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .dashboard-shell {
+    background: linear-gradient(180deg, #edf6f4 0%, #f3f8f8 42%, #eef4ef 100%);
+  }
+
+  .dashboard-content {
+    padding: .85rem .8rem 2rem;
+  }
+
+  .dashboard-header {
+    background: rgba(243,248,248,.9);
+    border: 1px solid rgba(38,83,104,.1);
+    box-shadow: 0 .7rem 1.4rem rgba(8,24,34,.05);
+    flex-direction: column;
+    gap: .85rem;
+    margin-bottom: .95rem;
+    padding: .85rem .85rem 1rem;
+  }
+
+  .dashboard-heading {
+    width: 100%;
+  }
+
+  .dashboard-title {
+    font-size: 1.85rem;
+    line-height: .98;
+  }
+
+  .header-actions {
+    align-items: stretch;
+    flex-direction: column;
+    gap: .55rem;
+    width: 100%;
+  }
+
+  .new-client-button,
+  .new-work-button,
+  .text-button,
+  .client-picker select,
+  .work-filter {
+    min-height: 2.8rem;
+  }
+
+  .new-client-button,
+  .new-work-button {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .profile-chip {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .section-heading {
+    gap: .8rem;
+    margin-bottom: .95rem;
+  }
+
+  .section-title {
+    font-size: 1.7rem;
+  }
+
+  .section-actions {
+    width: 100%;
+  }
+
+  .client-picker,
+  .client-picker select {
+    width: 100%;
+  }
+
+  .works-grid,
+  .dashboard-grid {
+    gap: .85rem;
+    grid-template-columns: 1fr;
+  }
+
+  .summary-card,
+  .upload-card,
+  .work-card {
+    border-radius: 1rem;
+  }
+
+  .summary-card,
+  .upload-card,
+  .work-card-body {
+    padding: 1rem;
+  }
+
+  .work-color {
+    min-height: 5.5rem;
+    padding: .9rem;
+  }
+
+  .work-card h3 {
+    font-size: 1.05rem;
+  }
+
+  .work-finance {
+    gap: .55rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: .8rem 0;
+  }
+
+  .work-finance div:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .work-meta {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: .2rem;
+  }
+
+  .dashboard-sidebar {
+    padding: .55rem .7rem .75rem;
+  }
+
+  .sidebar-topbar,
+  .sidebar-collapsed .sidebar-topbar {
+    gap: .45rem;
+  }
+
+  .sidebar-nav,
+  .sidebar-collapsed .sidebar-nav {
+    gap: .3rem;
+  }
+
+  .nav-item,
+  .sidebar-collapsed .nav-item {
+    border-radius: .65rem;
+    min-height: 2.35rem;
+    padding: .45rem .6rem;
+  }
+
+  .work-detail-backdrop,
+  .invoice-entry-backdrop,
+  .client-modal-backdrop {
+    padding: .7rem;
+  }
+
+  .work-detail,
+  .invoice-entry-modal,
+  .client-modal {
+    border-radius: 1rem;
+    max-height: 92svh;
+    padding: 1rem;
+  }
+
+  .work-detail-header {
+    margin-bottom: .95rem;
+    padding-bottom: .95rem;
+  }
+
+  .work-detail-header,
+  .work-detail-header-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .work-detail-header .profit-summary,
+  .work-detail-finance > div,
+  .detail-invoice,
+  .extras-list-summary {
+    border-radius: .85rem;
+  }
+
+  .work-detail-finance {
+    gap: .55rem;
+    grid-template-columns: 1fr;
+    margin-bottom: 1rem;
+  }
+
+  .work-detail-tabs {
+    gap: .4rem;
+  }
+
+  .tab-control {
+    width: 100%;
+  }
+
+  .work-detail-tabs .tab-control > button:first-child {
+    flex: 1 1 auto;
+  }
+
+  .detail-invoice,
+  .extra-payment-history,
+  .work-payment-history {
+    gap: .75rem;
+  }
+
+  .detail-invoice-value {
+    align-items: flex-start;
+  }
+
+  .detail-invoice-value input,
+  .extra-payment-history input,
+  .work-payment-history input {
+    width: 100%;
+  }
+
+  .received-metric {
+    padding: .9rem;
+  }
+
+  .received-toggle {
+    align-self: flex-start;
+  }
+
+  .invoice-entry-divider {
+    margin: .9rem 0;
+  }
+
+  .invoice-entry-form {
+    gap: .75rem;
+  }
+
+  .invoice-entry-form input {
+    min-height: 2.85rem;
+  }
+
+  .invoice-entry-submit,
+  .auth-submit {
+    min-height: 3rem;
   }
 }

@@ -41,7 +41,6 @@ export default function LoginPage() {
         return;
       }
 
-      // A full navigation makes the new session cookie available to the proxy.
       window.location.assign(destination);
     } catch {
       setErrorMessage("Não foi possível contactar o Supabase. Verifica a ligação e tenta novamente.");

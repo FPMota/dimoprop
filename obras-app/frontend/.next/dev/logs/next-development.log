@@ -1,8 +1,6 @@
-{"timestamp":"00:00:01.531","source":"Server","level":"LOG","message":""}
-{"timestamp":"00:00:02.616","source":"Browser","level":"INFO","message":"Download the React DevTools for a better development experience: https://react.dev/link/react-devtools"}
-{"timestamp":"00:00:04.306","source":"Browser","level":"INFO","message":"Download the React DevTools for a better development experience: https://react.dev/link/react-devtools"}
-{"timestamp":"00:00:21.177","source":"Browser","level":"INFO","message":"Download the React DevTools for a better development experience: https://react.dev/link/react-devtools"}
-{"timestamp":"00:00:22.201","source":"Server","level":"LOG","message":"✓ Compiled in 398ms"}
-{"timestamp":"00:00:30.355","source":"Browser","level":"INFO","message":"Download the React DevTools for a better development experience: https://react.dev/link/react-devtools"}
-{"timestamp":"00:00:39.312","source":"Browser","level":"INFO","message":"Download the React DevTools for a better development experience: https://react.dev/link/react-devtools"}
-{"timestamp":"00:02:24.791","source":"Browser","level":"INFO","message":"Download the React DevTools for a better development experience: https://react.dev/link/react-devtools"}
+{"timestamp":"00:00:01.287","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:00:02.225","source":"Server","level":"WARN","message":"AuthApiError: Invalid Refresh Token: Refresh Token Not Found"}
+{"timestamp":"00:00:02.227","source":"Server","level":"WARN","message":"AuthApiError: Invalid Refresh Token: Refresh Token Not Found"}
+{"timestamp":"00:00:02.439","source":"Browser","level":"INFO","message":"Download the React DevTools for a better development experience: https://react.dev/link/react-devtools"}
+{"timestamp":"00:02:41.265","source":"Server","level":"LOG","message":"✓ Compiled in 78ms"}
+{"timestamp":"00:18:29.206","source":"Server","level":"LOG","message":"✓ Compiled in 106ms"}

@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { ChangeEvent, FormEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase/client";
@@ -36,6 +36,19 @@ type Work = {
   color: string;
 };
 
+type Client = {
+  id: string;
+  name: string;
+};
+
+type AppState = {
+  workItems: Work[];
+  clientItems: Client[];
+  invoices: Invoice[];
+};
+
+const STORAGE_KEY = "dimoprop.dashboard.state.v1";
+
 const works: Work[] = [
   {
     name: "EXEMPLO",
@@ -50,7 +63,7 @@ const works: Work[] = [
   },
 ];
 
-const initialClients = [
+const initialClients: Client[] = [
   { id: "client-exemplo", name: "EXEMPLO" },
 ];
 
@@ -60,6 +73,32 @@ const money = new Intl.NumberFormat("pt-PT", {
   style: "currency",
   currency: "EUR",
 });
+
+function getFallbackState(): AppState {
+  return {
+    workItems: works,
+    clientItems: initialClients,
+    invoices: initialInvoices,
+  };
+}
+
+function loadDashboardState(): AppState {
+  if (typeof window === "undefined") return getFallbackState();
+
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return getFallbackState();
+
+    const parsed = JSON.parse(raw) as Partial<AppState>;
+    return {
+      workItems: Array.isArray(parsed.workItems) ? parsed.workItems : works,
+      clientItems: Array.isArray(parsed.clientItems) ? parsed.clientItems : initialClients,
+      invoices: Array.isArray(parsed.invoices) ? parsed.invoices : initialInvoices,
+    };
+  } catch {
+    return getFallbackState();
+  }
+}
 
 function extractAmount(text: string) {
   const lines = text.split("\n").map((line) => line.trim()).filter(Boolean);
@@ -263,6 +302,7 @@ export default function Home() {
   const [clientItems, setClientItems] = useState(initialClients);
   const [selectedClient, setSelectedClient] = useState("Todos os clientes");
   const [invoices, setInvoices] = useState(initialInvoices);
+  const [hasHydratedState, setHasHydratedState] = useState(false);
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
   const [newClientName, setNewClientName] = useState("");
   const [newClientEmail, setNewClientEmail] = useState("");
@@ -301,6 +341,26 @@ export default function Home() {
   const [useCurrentInvoiceDate, setUseCurrentInvoiceDate] = useState(true);
   const [ocrNotice, setOcrNotice] = useState("");
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const stored = loadDashboardState();
+      setWorkItems(stored.workItems);
+      setClientItems(stored.clientItems);
+      setInvoices(stored.invoices);
+      setHasHydratedState(true);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!hasHydratedState || typeof window === "undefined") return;
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ workItems, clientItems, invoices }),
+    );
+  }, [hasHydratedState, workItems, clientItems, invoices]);
+
   const visibleWorks = workItems.filter(
     (work) =>
       selectedClient === "Todos os clientes" ||
@@ -317,6 +377,17 @@ export default function Home() {
     return invoices
       .filter((invoice) => invoice.work === workName)
       .reduce((total, invoice) => total + invoice.amount, 0);
+  }
+
+  function updateWorkExtras(workName: string, delta: number) {
+    if (!delta) return;
+    setWorkItems((current) =>
+      current.map((work) =>
+        work.name === workName
+          ? { ...work, extras: Math.max(0, work.extras + delta) }
+          : work,
+      ),
+    );
   }
 
   async function handleLogout() {
@@ -451,7 +522,14 @@ export default function Home() {
   }
 
   function removeInvoice(invoiceId: number) {
-    setInvoices((current) => current.filter((invoice) => invoice.id !== invoiceId));
+    let removedInvoice: Invoice | undefined;
+    setInvoices((current) => {
+      removedInvoice = current.find((invoice) => invoice.id === invoiceId);
+      return current.filter((invoice) => invoice.id !== invoiceId);
+    });
+    if (removedInvoice?.type === "extra") {
+      updateWorkExtras(removedInvoice.work, -removedInvoice.amount);
+    }
     setExpandedPaymentHistory((current) => {
       const remaining = { ...current };
       delete remaining[invoiceId];
@@ -504,6 +582,9 @@ export default function Home() {
       },
       ...current,
     ]);
+    if (invoiceEntryType === "extra" && amount > 0) {
+      updateWorkExtras(detailWork.name, amount);
+    }
     setInvoiceEntryType(null);
   }
 
@@ -983,6 +1064,12 @@ export default function Home() {
                         .reduce((total, invoice) => total + invoice.amount, 0),
                     )}
                   </strong>
+                  <b>
+                    {
+                      detailInvoices.filter((invoice) => invoice.type === "normal")
+                        .length
+                    }
+                  </b>
                 </div>
                 <div>
                   <span>Mão de obra</span>
@@ -999,10 +1086,29 @@ export default function Home() {
                   <strong>{money.format(detailWork.extras)}</strong>
                 </div>
                 <div className="received-metric">
-                  <span>Pagamentos</span>
-                  <strong className="received-value">
-                    {money.format(detailWork.received)}
-                  </strong>
+                  <div className="received-metric-top">
+                    <span>Pagamentos</span>
+                    <strong className="received-value">
+                      {money.format(detailWork.received)}
+                    </strong>
+                  </div>
+                  <div className="received-meter" aria-hidden="true">
+                    <span
+                      style={{
+                        width:
+                          detailWork.budget > 0
+                            ? `${Math.min(
+                                (detailWork.received / detailWork.budget) * 100,
+                                100,
+                              )}%`
+                            : "0%",
+                      }}
+                    />
+                  </div>
+                  <div className="received-metric-foot">
+                    <span>Já pago {money.format(detailWork.received)}</span>
+                    <span>Falta {money.format(Math.max(0, detailWork.budget - detailWork.received))}</span>
+                  </div>
                   <button
                     className="received-toggle"
                     type="button"
@@ -1064,6 +1170,13 @@ export default function Home() {
                     onClick={() => setWorkDetailTab("normal")}
                   >
                     Faturas normais
+                    <b>
+                      {
+                        detailInvoices.filter(
+                          (invoice) => invoice.type === "normal",
+                        ).length
+                      }
+                    </b>
                   </button>
                   <button
                     className="tab-add-invoice"

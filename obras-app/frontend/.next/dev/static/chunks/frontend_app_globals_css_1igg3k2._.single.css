@@ -354,7 +354,10 @@ body {
 }
 
 .welcome-shell {
+  justify-content: center;
+  align-items: center;
   min-height: 100svh;
+  display: flex;
   position: relative;
   overflow: hidden;
 }
@@ -1506,8 +1509,46 @@ body {
 }
 
 .received-metric {
-  gap: .45rem;
+  border: 1px solid var(--line);
+  background: linear-gradient(145deg, #edf6dc, #fff);
+  border-radius: .8rem;
+  gap: .55rem;
+  padding: .85rem .9rem;
   display: grid;
+}
+
+.received-metric-top {
+  justify-content: space-between;
+  align-items: baseline;
+  gap: .5rem;
+  display: flex;
+}
+
+.received-meter {
+  background: var(--surface-strong);
+  border-radius: 99px;
+  height: .55rem;
+  overflow: hidden;
+}
+
+.received-meter span {
+  border-radius: inherit;
+  background: linear-gradient(90deg, #527b42, #9fc7e4);
+  height: 100%;
+  display: block;
+}
+
+.received-metric-foot {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: .35rem .75rem;
+  display: flex;
+}
+
+.received-metric-foot span {
+  color: var(--muted);
+  font-size: .7rem;
+  font-weight: 700;
 }
 
 .received-toggle {
@@ -1579,6 +1620,22 @@ body {
     border-top: 1px solid var(--line);
     padding-top: .55rem;
     padding-left: 0;
+  }
+
+  .received-metric {
+    border-radius: 1rem;
+    padding: .95rem 1rem;
+  }
+
+  .received-metric-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .2rem;
+  }
+
+  .received-metric-foot {
+    flex-direction: column;
+    gap: .2rem;
   }
 }
 
@@ -1954,6 +2011,10 @@ body {
   gap: .75rem;
   margin-bottom: 3rem;
   display: flex;
+}
+
+.auth-brand .company-logo {
+  max-width: 17rem;
 }
 
 .auth-heading h1 {
@@ -2903,11 +2964,13 @@ body {
 }
 
 .auth-shell {
-  isolation: isolate;
   background-color: #31515e;
   background-image: linear-gradient(115deg, #142d39db 0%, #284e5cb0 48%, #527b426b 100%), url("/dimoprop-house.jpg");
-  justify-content: flex-start;
-  padding: clamp(1.25rem, 5vw, 5rem);
+  place-items: center;
+  min-height: 100dvh;
+  padding: clamp(1rem, 3vw, 2rem);
+  display: grid;
+  position: relative;
 }
 
 .auth-shell:before {
@@ -2972,29 +3035,39 @@ body {
 .auth-card {
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
+  z-index: 1;
   background: #f3f8f8f0;
   border: 1px solid #ffffffbf;
   border-radius: 1.5rem;
+  place-items: center;
+  width: min(100%, 30rem);
   max-width: 30rem;
+  margin: 0 auto;
   padding: clamp(1.7rem, 4vw, 3rem);
   animation: .5s both soft-rise;
   box-shadow: 0 2rem 4.5rem #0a212b52;
 }
 
 .auth-brand {
+  text-align: center;
   background: linear-gradient(135deg, #e1f0f4, #edf6dc);
   border: 1px solid #26536821;
   border-radius: .9rem;
+  justify-content: center;
+  align-items: center;
   margin-bottom: 2rem;
   padding: .8rem 1rem;
+  display: flex;
 }
 
 .auth-brand .company-logo {
   max-width: 13rem;
+  margin: 0 auto;
+  display: block;
 }
 
 .auth-heading {
-  text-align: left;
+  text-align: center;
 }
 
 .auth-heading .eyebrow {
@@ -3106,11 +3179,11 @@ body {
   .auth-shell {
     background-image: linear-gradient(160deg, #10232b8f, #2d525c33 45%, #12262c75), url("/dimoprop-house.jpg");
     justify-content: center;
-    align-items: flex-start;
-    height: auto;
-    min-height: 100svh;
+    align-items: center;
+    height: 100dvh;
+    min-height: 100dvh;
     padding: 1.05rem .95rem;
-    overflow-y: auto;
+    overflow: hidden;
   }
 
   .auth-shell:before, .auth-atmosphere {
@@ -3124,7 +3197,7 @@ body {
     border: 1px solid #ffffffe6;
     border-radius: 1rem;
     max-width: 20.5rem;
-    margin: .35rem auto 1.25rem;
+    margin: 0;
     padding: .95rem;
     box-shadow: 0 18px 45px #08182242;
   }
@@ -3133,7 +3206,8 @@ body {
     background: #ffffff94;
     border-color: #ffffffbd;
     border-radius: .7rem;
-    justify-content: flex-start;
+    justify-content: center;
+    width: 100%;
     margin-bottom: .9rem;
     padding: .55rem .65rem;
   }
@@ -3233,10 +3307,6 @@ body {
     font-size: .72rem;
   }
 
-  .dashboard-content {
-    padding: .9rem .85rem 2.5rem;
-  }
-
   .dashboard-header {
     border-radius: .8rem;
     align-items: center;
@@ -3275,6 +3345,196 @@ body {
     width: 1.85rem;
     height: 1.85rem;
     font-size: .62rem;
+  }
+
+  .dashboard-shell {
+    background: linear-gradient(#edf6f4 0%, #f3f8f8 42%, #eef4ef 100%);
+  }
+
+  .dashboard-content {
+    padding: .85rem .8rem 2rem;
+  }
+
+  .dashboard-header {
+    background: #f3f8f8e6;
+    border: 1px solid #2653681a;
+    flex-direction: column;
+    gap: .85rem;
+    margin-bottom: .95rem;
+    padding: .85rem .85rem 1rem;
+    box-shadow: 0 .7rem 1.4rem #0818220d;
+  }
+
+  .dashboard-heading {
+    width: 100%;
+  }
+
+  .dashboard-title {
+    font-size: 1.85rem;
+    line-height: .98;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: .55rem;
+    width: 100%;
+  }
+
+  .new-client-button, .new-work-button, .text-button, .client-picker select, .work-filter {
+    min-height: 2.8rem;
+  }
+
+  .new-client-button, .new-work-button, .profile-chip {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .section-heading {
+    gap: .8rem;
+    margin-bottom: .95rem;
+  }
+
+  .section-title {
+    font-size: 1.7rem;
+  }
+
+  .section-actions, .client-picker, .client-picker select {
+    width: 100%;
+  }
+
+  .works-grid, .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: .85rem;
+  }
+
+  .summary-card, .upload-card, .work-card {
+    border-radius: 1rem;
+  }
+
+  .summary-card, .upload-card, .work-card-body {
+    padding: 1rem;
+  }
+
+  .work-color {
+    min-height: 5.5rem;
+    padding: .9rem;
+  }
+
+  .work-card h3 {
+    font-size: 1.05rem;
+  }
+
+  .work-finance {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .55rem;
+    padding: .8rem 0;
+  }
+
+  .work-finance div:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .work-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .2rem;
+  }
+
+  .dashboard-sidebar {
+    padding: .55rem .7rem .75rem;
+  }
+
+  .sidebar-topbar, .sidebar-collapsed .sidebar-topbar {
+    gap: .45rem;
+  }
+
+  .sidebar-nav, .sidebar-collapsed .sidebar-nav {
+    gap: .3rem;
+  }
+
+  .nav-item, .sidebar-collapsed .nav-item {
+    border-radius: .65rem;
+    min-height: 2.35rem;
+    padding: .45rem .6rem;
+  }
+
+  .work-detail-backdrop, .invoice-entry-backdrop, .client-modal-backdrop {
+    padding: .7rem;
+  }
+
+  .work-detail, .invoice-entry-modal, .client-modal {
+    border-radius: 1rem;
+    max-height: 92svh;
+    padding: 1rem;
+  }
+
+  .work-detail-header {
+    margin-bottom: .95rem;
+    padding-bottom: .95rem;
+  }
+
+  .work-detail-header, .work-detail-header-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .work-detail-header .profit-summary, .work-detail-finance > div, .detail-invoice, .extras-list-summary {
+    border-radius: .85rem;
+  }
+
+  .work-detail-finance {
+    grid-template-columns: 1fr;
+    gap: .55rem;
+    margin-bottom: 1rem;
+  }
+
+  .work-detail-tabs {
+    gap: .4rem;
+  }
+
+  .tab-control {
+    width: 100%;
+  }
+
+  .work-detail-tabs .tab-control > button:first-child {
+    flex: auto;
+  }
+
+  .detail-invoice, .extra-payment-history, .work-payment-history {
+    gap: .75rem;
+  }
+
+  .detail-invoice-value {
+    align-items: flex-start;
+  }
+
+  .detail-invoice-value input, .extra-payment-history input, .work-payment-history input {
+    width: 100%;
+  }
+
+  .received-metric {
+    padding: .9rem;
+  }
+
+  .received-toggle {
+    align-self: flex-start;
+  }
+
+  .invoice-entry-divider {
+    margin: .9rem 0;
+  }
+
+  .invoice-entry-form {
+    gap: .75rem;
+  }
+
+  .invoice-entry-form input {
+    min-height: 2.85rem;
+  }
+
+  .invoice-entry-submit, .auth-submit {
+    min-height: 3rem;
   }
 }
 

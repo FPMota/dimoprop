@@ -18,6 +18,7 @@ var _s = __turbopack_context__.k.signature();
 ;
 ;
 ;
+const STORAGE_KEY = "dimoprop.dashboard.state.v1";
 const works = [
     {
         name: "EXEMPLO",
@@ -42,13 +43,36 @@ const money = new Intl.NumberFormat("pt-PT", {
     style: "currency",
     currency: "EUR"
 });
+function getFallbackState() {
+    return {
+        workItems: works,
+        clientItems: initialClients,
+        invoices: initialInvoices
+    };
+}
+function loadDashboardState() {
+    if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
+    ;
+    try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        if (!raw) return getFallbackState();
+        const parsed = JSON.parse(raw);
+        return {
+            workItems: Array.isArray(parsed.workItems) ? parsed.workItems : works,
+            clientItems: Array.isArray(parsed.clientItems) ? parsed.clientItems : initialClients,
+            invoices: Array.isArray(parsed.invoices) ? parsed.invoices : initialInvoices
+        };
+    } catch  {
+        return getFallbackState();
+    }
+}
 function extractAmount(text) {
     const lines = text.split("\n").map((line)=>line.trim()).filter(Boolean);
     const amountPattern = /\d{1,3}(?:[.\s]\d{3})*(?:,\d{2}|\.\d{2})|\d+[,.]\d{2}/g;
     const labelPattern = /(?:\btotal\b|\btotal\s+geral\b|\bvalor\s+total\b|\ba\s+pagar\b|\bmontante\b|\bimporte\b)/i;
     const skipPattern = /sub\s*total|subtotal|iva|vat|imposto|saldo|pagamento|fatura|invoice/i;
     function normalizeAmount(candidate) {
-        const value = candidate.replace(/[â‚¬$\s]/g, "");
+        const value = candidate.replace(/[€$\s]/g, "");
         const normalized = value.includes(",") ? value.replace(/\./g, "").replace(",", ".") : value;
         return normalized && Number.isFinite(Number(normalized)) ? normalized : "";
     }
@@ -76,7 +100,7 @@ function extractDate(text) {
 }
 function extractDescription(text, fallback) {
     const lines = text.split("\n").map((line)=>line.trim()).filter(Boolean);
-    const noisePattern = /^(de|emitente|fornecedor|morada|address|nif|n\.?Âº|nÂº|data|fatura|invoice|ref\.?|referencia|referÃªncia|total|subtotal|iva|vat|imposto|pagamento|pago|valor|montante)/i;
+    const noisePattern = /^(de|emitente|fornecedor|morada|address|nif|n\.?º|nº|data|fatura|invoice|ref\.?|referencia|referência|total|subtotal|iva|vat|imposto|pagamento|pago|valor|montante)/i;
     const datePattern = /\b\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}\b/;
     const amountPattern = /\d{1,3}(?:[.\s]\d{3})*(?:,\d{2}|\.\d{2})|\d+[,.]\d{2}/;
     const candidate = lines.find((line)=>line.length > 3 && !noisePattern.test(line) && !datePattern.test(line) && !amountPattern.test(line) && /\p{L}/u.test(line));
@@ -196,6 +220,7 @@ function Home() {
     const [clientItems, setClientItems] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(initialClients);
     const [selectedClient, setSelectedClient] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])("Todos os clientes");
     const [invoices, setInvoices] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(initialInvoices);
+    const [hasHydratedState, setHasHydratedState] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const [isClientModalOpen, setIsClientModalOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const [newClientName, setNewClientName] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])("");
     const [newClientEmail, setNewClientEmail] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])("");
@@ -221,11 +246,49 @@ function Home() {
     const [manualInvoiceDate, setManualInvoiceDate] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])("");
     const [useCurrentInvoiceDate, setUseCurrentInvoiceDate] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(true);
     const [ocrNotice, setOcrNotice] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])("");
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "Home.useEffect": ()=>{
+            const timer = window.setTimeout({
+                "Home.useEffect.timer": ()=>{
+                    const stored = loadDashboardState();
+                    setWorkItems(stored.workItems);
+                    setClientItems(stored.clientItems);
+                    setInvoices(stored.invoices);
+                    setHasHydratedState(true);
+                }
+            }["Home.useEffect.timer"], 0);
+            return ({
+                "Home.useEffect": ()=>window.clearTimeout(timer)
+            })["Home.useEffect"];
+        }
+    }["Home.useEffect"], []);
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "Home.useEffect": ()=>{
+            if (!hasHydratedState || ("TURBOPACK compile-time value", "object") === "undefined") return;
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                workItems,
+                clientItems,
+                invoices
+            }));
+        }
+    }["Home.useEffect"], [
+        hasHydratedState,
+        workItems,
+        clientItems,
+        invoices
+    ]);
     const visibleWorks = workItems.filter((work)=>selectedClient === "Todos os clientes" || work.clientId === selectedClient);
     const detailWork = workItems.find((work)=>work.name === selectedWorkDetail);
     const detailInvoices = detailWork ? invoices.filter((invoice)=>invoice.work === detailWork.name).sort((first, second)=>second.date.localeCompare(first.date)) : [];
     function getWorkSpent(workName) {
         return invoices.filter((invoice)=>invoice.work === workName).reduce((total, invoice)=>total + invoice.amount, 0);
+    }
+    function updateWorkExtras(workName, delta) {
+        if (!delta) return;
+        setWorkItems((current)=>current.map((work)=>work.name === workName ? {
+                    ...work,
+                    extras: Math.max(0, work.extras + delta)
+                } : work));
     }
     async function handleLogout() {
         await __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$lib$2f$supabase$2f$client$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["supabase"].auth.signOut();
@@ -364,7 +427,14 @@ function Home() {
             }));
     }
     function removeInvoice(invoiceId) {
-        setInvoices((current)=>current.filter((invoice)=>invoice.id !== invoiceId));
+        let removedInvoice;
+        setInvoices((current)=>{
+            removedInvoice = current.find((invoice)=>invoice.id === invoiceId);
+            return current.filter((invoice)=>invoice.id !== invoiceId);
+        });
+        if (removedInvoice?.type === "extra") {
+            updateWorkExtras(removedInvoice.work, -removedInvoice.amount);
+        }
         setExpandedPaymentHistory((current)=>{
             const remaining = {
                 ...current
@@ -398,7 +468,7 @@ function Home() {
                 {
                     id: Date.now(),
                     supplier: manualInvoiceSupplier.trim(),
-                    description: manualInvoiceDescription.trim() || "Sem descriÃ§Ã£o",
+                    description: manualInvoiceDescription.trim() || "Sem descrição",
                     amount,
                     date,
                     work: detailWork.name,
@@ -415,6 +485,9 @@ function Home() {
                 },
                 ...current
             ]);
+        if (invoiceEntryType === "extra" && amount > 0) {
+            updateWorkExtras(detailWork.name, amount);
+        }
         setInvoiceEntryType(null);
     }
     async function handleInvoiceUpload(event) {
@@ -432,7 +505,7 @@ function Home() {
                 const result = await recognize(file, "por");
                 text = result.data.text;
             } else {
-                throw new Error("Este ficheiro nÃ£o Ã© uma imagem nem um PDF.");
+                throw new Error("Este ficheiro não é uma imagem nem um PDF.");
             }
             setManualInvoiceSupplier(extractSupplier(text, file.name.replace(/\.[^/.]+$/, "")));
             const detectedDate = extractDate(text);
@@ -441,10 +514,10 @@ function Home() {
             setManualInvoiceAmount(extractAmount(text));
             setManualInvoiceDate(detectedDate);
             setUseCurrentInvoiceDate(!detectedDate);
-            setOcrNotice(isPdf ? "PDF lido localmente. Confirma a descriÃ§Ã£o e o valor antes de guardar." : "Dados lidos localmente. Confirma ou corrige os campos antes de guardar.");
+            setOcrNotice(isPdf ? "PDF lido localmente. Confirma a descrição e o valor antes de guardar." : "Dados lidos localmente. Confirma ou corrige os campos antes de guardar.");
         } catch (error) {
             setManualInvoiceSupplier(file.name.replace(/\.[^/.]+$/, ""));
-            setOcrNotice(error instanceof Error ? error.message : "NÃ£o foi possÃ­vel ler a fatura. Preenche os campos manualmente.");
+            setOcrNotice(error instanceof Error ? error.message : "Não foi possível ler a fatura. Preenche os campos manualmente.");
         } finally{
             setIsUploadingInvoice(false);
             event.target.value = "";
@@ -465,13 +538,13 @@ function Home() {
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$image$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
                                         className: "company-logo company-logo-small",
                                         src: "/dimoprop-logo.svg",
-                                        alt: "Dimoprop ConstruÃ§Ãµes e RemodelaÃ§Ãµes",
+                                        alt: "Dimoprop Construções e Remodelações",
                                         width: 720,
                                         height: 270,
                                         priority: true
                                     }, void 0, false, {
                                         fileName: "[project]/frontend/app/page.tsx",
-                                        lineNumber: 571,
+                                        lineNumber: 652,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -480,13 +553,13 @@ function Home() {
                                         children: "D"
                                     }, void 0, false, {
                                         fileName: "[project]/frontend/app/page.tsx",
-                                        lineNumber: 579,
+                                        lineNumber: 660,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/frontend/app/page.tsx",
-                                lineNumber: 570,
+                                lineNumber: 651,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -495,46 +568,46 @@ function Home() {
                                 onClick: ()=>setIsSidebarOpen((open)=>!open),
                                 "aria-label": isSidebarOpen ? "Fechar barra lateral" : "Abrir barra lateral",
                                 title: isSidebarOpen ? "Fechar barra lateral" : "Abrir barra lateral",
-                                children: "â˜°"
+                                children: "☰"
                             }, void 0, false, {
                                 fileName: "[project]/frontend/app/page.tsx",
-                                lineNumber: 583,
+                                lineNumber: 664,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/frontend/app/page.tsx",
-                        lineNumber: 569,
+                        lineNumber: 650,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "sidebar-label",
-                        children: "Ãrea de trabalho"
+                        children: "Área de trabalho"
                     }, void 0, false, {
                         fileName: "[project]/frontend/app/page.tsx",
-                        lineNumber: 597,
+                        lineNumber: 678,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("nav", {
                         className: "sidebar-nav",
-                        "aria-label": "NavegaÃ§Ã£o principal",
+                        "aria-label": "Navegação principal",
                         children: [
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("a", {
                                 className: "nav-item nav-item-active",
                                 href: "#resumo",
                                 children: [
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                        children: "â–¦"
+                                        children: "▦"
                                     }, void 0, false, {
                                         fileName: "[project]/frontend/app/page.tsx",
-                                        lineNumber: 600,
+                                        lineNumber: 681,
                                         columnNumber: 13
                                     }, this),
                                     " Resumo"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/frontend/app/page.tsx",
-                                lineNumber: 599,
+                                lineNumber: 680,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("a", {
@@ -542,10 +615,10 @@ function Home() {
                                 href: "#obras",
                                 children: [
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                        children: "âŒ‚"
+                                        children: "⌂"
                                     }, void 0, false, {
                                         fileName: "[project]/frontend/app/page.tsx",
-                                        lineNumber: 603,
+                                        lineNumber: 684,
                                         columnNumber: 13
                                     }, this),
                                     " Obras ",
@@ -553,19 +626,19 @@ function Home() {
                                         children: visibleWorks.length
                                     }, void 0, false, {
                                         fileName: "[project]/frontend/app/page.tsx",
-                                        lineNumber: 603,
-                                        columnNumber: 36
+                                        lineNumber: 684,
+                                        columnNumber: 34
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/frontend/app/page.tsx",
-                                lineNumber: 602,
+                                lineNumber: 683,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/frontend/app/page.tsx",
-                        lineNumber: 598,
+                        lineNumber: 679,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -575,7 +648,7 @@ function Home() {
                                 className: "status-dot"
                             }, void 0, false, {
                                 fileName: "[project]/frontend/app/page.tsx",
-                                lineNumber: 607,
+                                lineNumber: 688,
                                 columnNumber: 11
                             }, this),
                             " Dados locais",
@@ -585,19 +658,19 @@ function Home() {
                                 children: "v0.1"
                             }, void 0, false, {
                                 fileName: "[project]/frontend/app/page.tsx",
-                                lineNumber: 608,
+                                lineNumber: 689,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/frontend/app/page.tsx",
-                        lineNumber: 606,
+                        lineNumber: 687,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/frontend/app/page.tsx",
-                lineNumber: 568,
+                lineNumber: 649,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("section", {
@@ -612,29 +685,29 @@ function Home() {
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                             className: "eyebrow",
-                                            children: "TerÃ§a-feira, 18 de agosto de 2026"
+                                            children: "Terça-feira, 18 de agosto de 2026"
                                         }, void 0, false, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 616,
+                                            lineNumber: 697,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
                                             className: "display-font dashboard-title",
-                                            children: "OlÃ¡, Dino."
+                                            children: "Olá, Dino."
                                         }, void 0, false, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 617,
+                                            lineNumber: 698,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/frontend/app/page.tsx",
-                                    lineNumber: 615,
+                                    lineNumber: 696,
                                     columnNumber: 13
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/frontend/app/page.tsx",
-                                lineNumber: 614,
+                                lineNumber: 695,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -647,21 +720,21 @@ function Home() {
                                         children: "+ Novo cliente"
                                     }, void 0, false, {
                                         fileName: "[project]/frontend/app/page.tsx",
-                                        lineNumber: 621,
+                                        lineNumber: 702,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                         className: "profile-chip profile-button",
                                         type: "button",
                                         onClick: handleLogout,
-                                        title: "Terminar sessÃ£o",
+                                        title: "Terminar sessão",
                                         children: [
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                 className: "profile-avatar",
                                                 children: "DM"
                                             }, void 0, false, {
                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                lineNumber: 634,
+                                                lineNumber: 715,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -669,33 +742,33 @@ function Home() {
                                                 children: "Dino Mota"
                                             }, void 0, false, {
                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                lineNumber: 635,
+                                                lineNumber: 716,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                 "aria-hidden": "true",
-                                                children: "â†ª"
+                                                children: "↪"
                                             }, void 0, false, {
                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                lineNumber: 636,
+                                                lineNumber: 717,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/frontend/app/page.tsx",
-                                        lineNumber: 628,
+                                        lineNumber: 709,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/frontend/app/page.tsx",
-                                lineNumber: 620,
+                                lineNumber: 701,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/frontend/app/page.tsx",
-                        lineNumber: 613,
+                        lineNumber: 694,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("section", {
@@ -712,7 +785,7 @@ function Home() {
                                                 children: "A acompanhar"
                                             }, void 0, false, {
                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                lineNumber: 644,
+                                                lineNumber: 725,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
@@ -720,13 +793,13 @@ function Home() {
                                                 children: "As tuas obras"
                                             }, void 0, false, {
                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                lineNumber: 645,
+                                                lineNumber: 726,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/frontend/app/page.tsx",
-                                        lineNumber: 643,
+                                        lineNumber: 724,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -739,7 +812,7 @@ function Home() {
                                                         children: "Cliente"
                                                     }, void 0, false, {
                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                        lineNumber: 649,
+                                                        lineNumber: 730,
                                                         columnNumber: 17
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
@@ -750,7 +823,7 @@ function Home() {
                                                                 children: "Todos os clientes"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                                lineNumber: 654,
+                                                                lineNumber: 735,
                                                                 columnNumber: 19
                                                             }, this),
                                                             clientItems.map((client)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
@@ -758,19 +831,19 @@ function Home() {
                                                                     children: client.name
                                                                 }, client.id, false, {
                                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                                    lineNumber: 656,
+                                                                    lineNumber: 737,
                                                                     columnNumber: 21
                                                                 }, this))
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                        lineNumber: 650,
+                                                        lineNumber: 731,
                                                         columnNumber: 17
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                lineNumber: 648,
+                                                lineNumber: 729,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -780,7 +853,7 @@ function Home() {
                                                 children: "+ Adicionar obra"
                                             }, void 0, false, {
                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                lineNumber: 662,
+                                                lineNumber: 743,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -788,28 +861,28 @@ function Home() {
                                                 children: [
                                                     "Ver todas ",
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                        children: "â†’"
+                                                        children: "→"
                                                     }, void 0, false, {
                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                        lineNumber: 670,
+                                                        lineNumber: 751,
                                                         columnNumber: 27
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                lineNumber: 669,
+                                                lineNumber: 750,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/frontend/app/page.tsx",
-                                        lineNumber: 647,
+                                        lineNumber: 728,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/frontend/app/page.tsx",
-                                lineNumber: 642,
+                                lineNumber: 723,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -832,20 +905,20 @@ function Home() {
                                                         children: work.code
                                                     }, void 0, false, {
                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                        lineNumber: 691,
+                                                        lineNumber: 772,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                        children: "â†—"
+                                                        children: "↗"
                                                     }, void 0, false, {
                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                        lineNumber: 692,
+                                                        lineNumber: 773,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                lineNumber: 690,
+                                                lineNumber: 771,
                                                 columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -860,7 +933,7 @@ function Home() {
                                                                         children: work.name
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                                        lineNumber: 697,
+                                                                        lineNumber: 778,
                                                                         columnNumber: 25
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -868,13 +941,13 @@ function Home() {
                                                                         children: clientName
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                                        lineNumber: 698,
+                                                                        lineNumber: 779,
                                                                         columnNumber: 25
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                                lineNumber: 696,
+                                                                lineNumber: 777,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -885,13 +958,13 @@ function Home() {
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                                lineNumber: 700,
+                                                                lineNumber: 781,
                                                                 columnNumber: 23
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                        lineNumber: 695,
+                                                        lineNumber: 776,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -902,12 +975,12 @@ function Home() {
                                                             }
                                                         }, void 0, false, {
                                                             fileName: "[project]/frontend/app/page.tsx",
-                                                            lineNumber: 703,
+                                                            lineNumber: 784,
                                                             columnNumber: 23
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                        lineNumber: 702,
+                                                        lineNumber: 783,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -916,23 +989,23 @@ function Home() {
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                 children: [
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                                        children: "OrÃ§amento"
+                                                                        children: "Orçamento"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                                        lineNumber: 707,
+                                                                        lineNumber: 788,
                                                                         columnNumber: 25
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("strong", {
                                                                         children: money.format(work.budget)
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                                        lineNumber: 708,
+                                                                        lineNumber: 789,
                                                                         columnNumber: 25
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                                lineNumber: 706,
+                                                                lineNumber: 787,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -941,21 +1014,21 @@ function Home() {
                                                                         children: "Extras"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                                        lineNumber: 711,
+                                                                        lineNumber: 792,
                                                                         columnNumber: 25
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("strong", {
                                                                         className: work.extras ? "extra-value" : "",
-                                                                        children: work.extras ? `+ ${money.format(work.extras)}` : "â€”"
+                                                                        children: work.extras ? `+ ${money.format(work.extras)}` : "—"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                                        lineNumber: 712,
+                                                                        lineNumber: 793,
                                                                         columnNumber: 25
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                                lineNumber: 710,
+                                                                lineNumber: 791,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -964,7 +1037,7 @@ function Home() {
                                                                         children: "Recebido"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                                        lineNumber: 717,
+                                                                        lineNumber: 798,
                                                                         columnNumber: 25
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("strong", {
@@ -972,19 +1045,19 @@ function Home() {
                                                                         children: money.format(work.received)
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                                        lineNumber: 718,
+                                                                        lineNumber: 799,
                                                                         columnNumber: 25
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                                lineNumber: 716,
+                                                                lineNumber: 797,
                                                                 columnNumber: 23
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                        lineNumber: 705,
+                                                        lineNumber: 786,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -994,44 +1067,44 @@ function Home() {
                                                                 children: "Gasto registado"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                                lineNumber: 724,
+                                                                lineNumber: 805,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("strong", {
                                                                 children: money.format(spent)
                                                             }, void 0, false, {
                                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                                lineNumber: 725,
+                                                                lineNumber: 806,
                                                                 columnNumber: 23
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                        lineNumber: 723,
+                                                        lineNumber: 804,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                lineNumber: 694,
+                                                lineNumber: 775,
                                                 columnNumber: 19
                                             }, this)
                                         ]
                                     }, work.code, true, {
                                         fileName: "[project]/frontend/app/page.tsx",
-                                        lineNumber: 681,
+                                        lineNumber: 762,
                                         columnNumber: 17
                                     }, this);
                                 })
                             }, void 0, false, {
                                 fileName: "[project]/frontend/app/page.tsx",
-                                lineNumber: 674,
+                                lineNumber: 755,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/frontend/app/page.tsx",
-                        lineNumber: 641,
+                        lineNumber: 722,
                         columnNumber: 9
                     }, this),
                     isClientModalOpen && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1056,7 +1129,7 @@ function Home() {
                                                     children: "Dimoprop / cliente"
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 751,
+                                                    lineNumber: 832,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
@@ -1065,13 +1138,13 @@ function Home() {
                                                     children: "Novo cliente"
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 752,
+                                                    lineNumber: 833,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 750,
+                                            lineNumber: 831,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -1079,16 +1152,16 @@ function Home() {
                                             type: "button",
                                             onClick: ()=>setIsClientModalOpen(false),
                                             "aria-label": "Fechar",
-                                            children: "Ã—"
+                                            children: "×"
                                         }, void 0, false, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 756,
+                                            lineNumber: 837,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/frontend/app/page.tsx",
-                                    lineNumber: 749,
+                                    lineNumber: 830,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -1108,13 +1181,13 @@ function Home() {
                                                     autoFocus: true
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 768,
+                                                    lineNumber: 849,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 766,
+                                            lineNumber: 847,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
@@ -1129,13 +1202,13 @@ function Home() {
                                                     placeholder: "cliente@email.pt"
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 779,
+                                                    lineNumber: 860,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 777,
+                                            lineNumber: 858,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
@@ -1149,13 +1222,13 @@ function Home() {
                                                     placeholder: "912 345 678"
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 789,
+                                                    lineNumber: 870,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 787,
+                                            lineNumber: 868,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1168,7 +1241,7 @@ function Home() {
                                                     children: "Cancelar"
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 797,
+                                                    lineNumber: 878,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -1180,36 +1253,36 @@ function Home() {
                                                             children: "→"
                                                         }, void 0, false, {
                                                             fileName: "[project]/frontend/app/page.tsx",
-                                                            lineNumber: 805,
+                                                            lineNumber: 886,
                                                             columnNumber: 37
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 804,
+                                                    lineNumber: 885,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 796,
+                                            lineNumber: 877,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/frontend/app/page.tsx",
-                                    lineNumber: 765,
+                                    lineNumber: 846,
                                     columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/frontend/app/page.tsx",
-                            lineNumber: 743,
+                            lineNumber: 824,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/frontend/app/page.tsx",
-                        lineNumber: 735,
+                        lineNumber: 816,
                         columnNumber: 11
                     }, this),
                     isWorkModalOpen && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1234,7 +1307,7 @@ function Home() {
                                                     children: "Dimoprop / obra"
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 829,
+                                                    lineNumber: 910,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
@@ -1243,13 +1316,13 @@ function Home() {
                                                     children: "Adicionar obra"
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 830,
+                                                    lineNumber: 911,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 828,
+                                            lineNumber: 909,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -1257,16 +1330,16 @@ function Home() {
                                             type: "button",
                                             onClick: ()=>setIsWorkModalOpen(false),
                                             "aria-label": "Fechar",
-                                            children: "Ã—"
+                                            children: "×"
                                         }, void 0, false, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 834,
+                                            lineNumber: 915,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/frontend/app/page.tsx",
-                                    lineNumber: 827,
+                                    lineNumber: 908,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -1286,13 +1359,13 @@ function Home() {
                                                     autoFocus: true
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 846,
+                                                    lineNumber: 927,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 844,
+                                            lineNumber: 925,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
@@ -1309,7 +1382,7 @@ function Home() {
                                                             children: "Novo cliente"
                                                         }, void 0, false, {
                                                             fileName: "[project]/frontend/app/page.tsx",
-                                                            lineNumber: 862,
+                                                            lineNumber: 943,
                                                             columnNumber: 21
                                                         }, this),
                                                         clientItems.map((client)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
@@ -1317,25 +1390,25 @@ function Home() {
                                                                 children: client.name
                                                             }, client.id, false, {
                                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                                lineNumber: 864,
+                                                                lineNumber: 945,
                                                                 columnNumber: 23
                                                             }, this))
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 857,
+                                                    lineNumber: 938,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 855,
+                                            lineNumber: 936,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
                                             htmlFor: "work-budget",
                                             children: [
-                                                "OrÃ§amento total",
+                                                "Orçamento total",
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                     id: "work-budget",
                                                     type: "number",
@@ -1347,19 +1420,19 @@ function Home() {
                                                     required: true
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 872,
+                                                    lineNumber: 953,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 870,
+                                            lineNumber: 951,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
                                             htmlFor: "work-received",
                                             children: [
-                                                "JÃ¡ recebido",
+                                                "Já recebido",
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                     id: "work-received",
                                                     type: "number",
@@ -1370,13 +1443,13 @@ function Home() {
                                                     placeholder: "0,00"
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 885,
+                                                    lineNumber: 966,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 883,
+                                            lineNumber: 964,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1389,7 +1462,7 @@ function Home() {
                                                     children: "Cancelar"
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 896,
+                                                    lineNumber: 977,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -1398,39 +1471,39 @@ function Home() {
                                                     children: [
                                                         "Guardar obra ",
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                            children: "â†’"
+                                                            children: "→"
                                                         }, void 0, false, {
                                                             fileName: "[project]/frontend/app/page.tsx",
-                                                            lineNumber: 904,
+                                                            lineNumber: 985,
                                                             columnNumber: 34
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 903,
+                                                    lineNumber: 984,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 895,
+                                            lineNumber: 976,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/frontend/app/page.tsx",
-                                    lineNumber: 843,
+                                    lineNumber: 924,
                                     columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/frontend/app/page.tsx",
-                            lineNumber: 821,
+                            lineNumber: 902,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/frontend/app/page.tsx",
-                        lineNumber: 813,
+                        lineNumber: 894,
                         columnNumber: 11
                     }, this),
                     detailWork && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1458,7 +1531,7 @@ function Home() {
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 928,
+                                                    lineNumber: 1009,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
@@ -1467,7 +1540,7 @@ function Home() {
                                                     children: detailWork.name
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 929,
+                                                    lineNumber: 1010,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1475,13 +1548,13 @@ function Home() {
                                                     children: clientItems.find((client)=>client.id === detailWork.clientId)?.name ?? "Sem cliente"
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 932,
+                                                    lineNumber: 1013,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 927,
+                                            lineNumber: 1008,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1498,29 +1571,29 @@ function Home() {
                                                                     type: "button",
                                                                     onClick: ()=>setShowProfit((visible)=>!visible),
                                                                     "aria-label": showProfit ? "Esconder lucro" : "Mostrar lucro",
-                                                                    children: showProfit ? "â—‰" : "â—Œ"
+                                                                    children: showProfit ? "◉" : "◌"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                                    lineNumber: 942,
+                                                                    lineNumber: 1023,
                                                                     columnNumber: 23
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/frontend/app/page.tsx",
-                                                            lineNumber: 940,
+                                                            lineNumber: 1021,
                                                             columnNumber: 21
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("strong", {
-                                                            children: showProfit ? money.format(detailWork.budget + detailWork.extras - detailInvoices.filter((invoice)=>invoice.type !== "extra").reduce((total, invoice)=>total + invoice.amount, 0)) : "â€¢â€¢â€¢â€¢"
+                                                            children: showProfit ? money.format(detailWork.budget + detailWork.extras - detailInvoices.filter((invoice)=>invoice.type !== "extra").reduce((total, invoice)=>total + invoice.amount, 0)) : "••••"
                                                         }, void 0, false, {
                                                             fileName: "[project]/frontend/app/page.tsx",
-                                                            lineNumber: 950,
+                                                            lineNumber: 1031,
                                                             columnNumber: 21
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 939,
+                                                    lineNumber: 1020,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -1528,22 +1601,22 @@ function Home() {
                                                     type: "button",
                                                     onClick: ()=>setSelectedWorkDetail(null),
                                                     "aria-label": "Fechar",
-                                                    children: "Ã—"
+                                                    children: "×"
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 962,
+                                                    lineNumber: 1043,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 938,
+                                            lineNumber: 1019,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/frontend/app/page.tsx",
-                                    lineNumber: 926,
+                                    lineNumber: 1007,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1552,23 +1625,23 @@ function Home() {
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                             children: [
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                    children: "OrÃ§amento"
+                                                    children: "Orçamento"
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 974,
+                                                    lineNumber: 1055,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("strong", {
                                                     children: money.format(detailWork.budget)
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 975,
+                                                    lineNumber: 1056,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 973,
+                                            lineNumber: 1054,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1577,42 +1650,49 @@ function Home() {
                                                     children: "Faturas normais"
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 978,
+                                                    lineNumber: 1059,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("strong", {
                                                     children: money.format(detailInvoices.filter((invoice)=>invoice.type === "normal").reduce((total, invoice)=>total + invoice.amount, 0))
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 979,
+                                                    lineNumber: 1060,
+                                                    columnNumber: 19
+                                                }, this),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("b", {
+                                                    children: detailInvoices.filter((invoice)=>invoice.type === "normal").length
+                                                }, void 0, false, {
+                                                    fileName: "[project]/frontend/app/page.tsx",
+                                                    lineNumber: 1067,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 977,
+                                            lineNumber: 1058,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                             children: [
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                    children: "MÃ£o de obra"
+                                                    children: "Mão de obra"
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 988,
+                                                    lineNumber: 1075,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("strong", {
                                                     children: money.format(detailInvoices.filter((invoice)=>invoice.type === "labor").reduce((total, invoice)=>total + invoice.amount, 0))
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 989,
+                                                    lineNumber: 1076,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 987,
+                                            lineNumber: 1074,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1621,38 +1701,93 @@ function Home() {
                                                     children: "Extras"
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 998,
+                                                    lineNumber: 1085,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("strong", {
                                                     children: money.format(detailWork.extras)
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 999,
+                                                    lineNumber: 1086,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 997,
+                                            lineNumber: 1084,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                             className: "received-metric",
                                             children: [
-                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                    children: "Pagamentos"
-                                                }, void 0, false, {
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                    className: "received-metric-top",
+                                                    children: [
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                            children: "Pagamentos"
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/frontend/app/page.tsx",
+                                                            lineNumber: 1090,
+                                                            columnNumber: 21
+                                                        }, this),
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("strong", {
+                                                            className: "received-value",
+                                                            children: money.format(detailWork.received)
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/frontend/app/page.tsx",
+                                                            lineNumber: 1091,
+                                                            columnNumber: 21
+                                                        }, this)
+                                                    ]
+                                                }, void 0, true, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 1002,
+                                                    lineNumber: 1089,
                                                     columnNumber: 19
                                                 }, this),
-                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("strong", {
-                                                    className: "received-value",
-                                                    children: money.format(detailWork.received)
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                    className: "received-meter",
+                                                    "aria-hidden": "true",
+                                                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                        style: {
+                                                            width: detailWork.budget > 0 ? `${Math.min(detailWork.received / detailWork.budget * 100, 100)}%` : "0%"
+                                                        }
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/frontend/app/page.tsx",
+                                                        lineNumber: 1096,
+                                                        columnNumber: 21
+                                                    }, this)
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 1003,
+                                                    lineNumber: 1095,
+                                                    columnNumber: 19
+                                                }, this),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                    className: "received-metric-foot",
+                                                    children: [
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                            children: [
+                                                                "Já pago ",
+                                                                money.format(detailWork.received)
+                                                            ]
+                                                        }, void 0, true, {
+                                                            fileName: "[project]/frontend/app/page.tsx",
+                                                            lineNumber: 1109,
+                                                            columnNumber: 21
+                                                        }, this),
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                            children: [
+                                                                "Falta ",
+                                                                money.format(Math.max(0, detailWork.budget - detailWork.received))
+                                                            ]
+                                                        }, void 0, true, {
+                                                            fileName: "[project]/frontend/app/page.tsx",
+                                                            lineNumber: 1110,
+                                                            columnNumber: 21
+                                                        }, this)
+                                                    ]
+                                                }, void 0, true, {
+                                                    fileName: "[project]/frontend/app/page.tsx",
+                                                    lineNumber: 1108,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -1664,20 +1799,20 @@ function Home() {
                                                             })),
                                                     "aria-expanded": Boolean(expandedWorkPayments[detailWork.name]),
                                                     "aria-label": `Adicionar pagamento a ${detailWork.name}`,
-                                                    children: expandedWorkPayments[detailWork.name] ? "âˆ’" : "+"
+                                                    children: expandedWorkPayments[detailWork.name] ? "−" : "+"
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 1006,
+                                                    lineNumber: 1112,
                                                     columnNumber: 19
                                                 }, this),
                                                 expandedWorkPayments[detailWork.name] && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                     className: "work-payment-history",
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("strong", {
-                                                            children: "HistÃ³rico de pagamentos"
+                                                            children: "Histórico de pagamentos"
                                                         }, void 0, false, {
                                                             fileName: "[project]/frontend/app/page.tsx",
-                                                            lineNumber: 1022,
+                                                            lineNumber: 1128,
                                                             columnNumber: 23
                                                         }, this),
                                                         detailWork.receivedPayments.length ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1685,24 +1820,24 @@ function Home() {
                                                             children: detailWork.receivedPayments.map((payment)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                                     children: [
                                                                         payment.date,
-                                                                        " Â· ",
+                                                                        " · ",
                                                                         money.format(payment.amount)
                                                                     ]
                                                                 }, payment.id, true, {
                                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                                    lineNumber: 1026,
+                                                                    lineNumber: 1132,
                                                                     columnNumber: 29
                                                                 }, this))
                                                         }, void 0, false, {
                                                             fileName: "[project]/frontend/app/page.tsx",
-                                                            lineNumber: 1024,
+                                                            lineNumber: 1130,
                                                             columnNumber: 25
                                                         }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                             className: "no-payments",
                                                             children: "Ainda sem pagamentos registados."
                                                         }, void 0, false, {
                                                             fileName: "[project]/frontend/app/page.tsx",
-                                                            lineNumber: 1032,
+                                                            lineNumber: 1138,
                                                             columnNumber: 25
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
@@ -1717,7 +1852,7 @@ function Home() {
                                                                     onChange: (event)=>updateWorkPayment(detailWork.name, event.target.value)
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                                    lineNumber: 1038,
+                                                                    lineNumber: 1144,
                                                                     columnNumber: 25
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -1726,31 +1861,31 @@ function Home() {
                                                                     children: "Registar"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                                    lineNumber: 1048,
+                                                                    lineNumber: 1154,
                                                                     columnNumber: 25
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/frontend/app/page.tsx",
-                                                            lineNumber: 1036,
+                                                            lineNumber: 1142,
                                                             columnNumber: 23
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 1021,
+                                                    lineNumber: 1127,
                                                     columnNumber: 21
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 1001,
+                                            lineNumber: 1088,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/frontend/app/page.tsx",
-                                    lineNumber: 972,
+                                    lineNumber: 1053,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1763,10 +1898,19 @@ function Home() {
                                                     className: workDetailTab === "normal" ? "active" : "",
                                                     type: "button",
                                                     onClick: ()=>setWorkDetailTab("normal"),
-                                                    children: "Faturas normais"
-                                                }, void 0, false, {
+                                                    children: [
+                                                        "Faturas normais",
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("b", {
+                                                            children: detailInvoices.filter((invoice)=>invoice.type === "normal").length
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/frontend/app/page.tsx",
+                                                            lineNumber: 1173,
+                                                            columnNumber: 21
+                                                        }, this)
+                                                    ]
+                                                }, void 0, true, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 1061,
+                                                    lineNumber: 1167,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -1778,13 +1922,13 @@ function Home() {
                                                     children: "+"
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 1068,
+                                                    lineNumber: 1181,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 1060,
+                                            lineNumber: 1166,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1795,36 +1939,36 @@ function Home() {
                                                     type: "button",
                                                     onClick: ()=>setWorkDetailTab("labor"),
                                                     children: [
-                                                        "MÃ£o de obra",
+                                                        "Mão de obra",
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("b", {
                                                             children: detailInvoices.filter((invoice)=>invoice.type === "labor").length
                                                         }, void 0, false, {
                                                             fileName: "[project]/frontend/app/page.tsx",
-                                                            lineNumber: 1085,
+                                                            lineNumber: 1198,
                                                             columnNumber: 21
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 1079,
+                                                    lineNumber: 1192,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                                     className: "tab-add-invoice",
                                                     type: "button",
                                                     onClick: ()=>openInvoiceEntry("labor"),
-                                                    title: "Adicionar mÃ£o de obra",
-                                                    "aria-label": "Adicionar mÃ£o de obra",
+                                                    title: "Adicionar mão de obra",
+                                                    "aria-label": "Adicionar mão de obra",
                                                     children: "+"
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 1093,
+                                                    lineNumber: 1206,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 1078,
+                                            lineNumber: 1191,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1841,13 +1985,13 @@ function Home() {
                                                             children: detailInvoices.filter((invoice)=>invoice.type === "extra").length
                                                         }, void 0, false, {
                                                             fileName: "[project]/frontend/app/page.tsx",
-                                                            lineNumber: 1110,
+                                                            lineNumber: 1223,
                                                             columnNumber: 21
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 1104,
+                                                    lineNumber: 1217,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -1859,19 +2003,19 @@ function Home() {
                                                     children: "+"
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 1118,
+                                                    lineNumber: 1231,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 1103,
+                                            lineNumber: 1216,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/frontend/app/page.tsx",
-                                    lineNumber: 1059,
+                                    lineNumber: 1165,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1886,29 +2030,29 @@ function Home() {
                                                             children: "Total de extras"
                                                         }, void 0, false, {
                                                             fileName: "[project]/frontend/app/page.tsx",
-                                                            lineNumber: 1133,
+                                                            lineNumber: 1246,
                                                             columnNumber: 23
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("strong", {
                                                             children: money.format(detailInvoices.filter((invoice)=>invoice.type === "extra").reduce((total, invoice)=>total + invoice.amount, 0))
                                                         }, void 0, false, {
                                                             fileName: "[project]/frontend/app/page.tsx",
-                                                            lineNumber: 1134,
+                                                            lineNumber: 1247,
                                                             columnNumber: 23
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 1132,
+                                                    lineNumber: 1245,
                                                     columnNumber: 21
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                            children: "JÃ¡ pago"
+                                                            children: "Já pago"
                                                         }, void 0, false, {
                                                             fileName: "[project]/frontend/app/page.tsx",
-                                                            lineNumber: 1143,
+                                                            lineNumber: 1256,
                                                             columnNumber: 23
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("strong", {
@@ -1916,13 +2060,13 @@ function Home() {
                                                             children: money.format(detailInvoices.filter((invoice)=>invoice.type === "extra").reduce((total, invoice)=>total + invoice.paid, 0))
                                                         }, void 0, false, {
                                                             fileName: "[project]/frontend/app/page.tsx",
-                                                            lineNumber: 1144,
+                                                            lineNumber: 1257,
                                                             columnNumber: 23
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 1142,
+                                                    lineNumber: 1255,
                                                     columnNumber: 21
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1931,7 +2075,7 @@ function Home() {
                                                             children: "Falta pagar"
                                                         }, void 0, false, {
                                                             fileName: "[project]/frontend/app/page.tsx",
-                                                            lineNumber: 1153,
+                                                            lineNumber: 1266,
                                                             columnNumber: 23
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("strong", {
@@ -1939,19 +2083,19 @@ function Home() {
                                                             children: money.format(detailInvoices.filter((invoice)=>invoice.type === "extra").reduce((total, invoice)=>total + invoice.amount - invoice.paid, 0))
                                                         }, void 0, false, {
                                                             fileName: "[project]/frontend/app/page.tsx",
-                                                            lineNumber: 1154,
+                                                            lineNumber: 1267,
                                                             columnNumber: 23
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 1152,
+                                                    lineNumber: 1265,
                                                     columnNumber: 21
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 1131,
+                                            lineNumber: 1244,
                                             columnNumber: 19
                                         }, this),
                                         detailInvoices.filter((invoice)=>workDetailTab === "extra" ? invoice.type === "extra" : invoice.type === workDetailTab).map((invoice)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("article", {
@@ -1970,41 +2114,41 @@ function Home() {
                                                                                     [invoice.id]: !current[invoice.id]
                                                                                 })),
                                                                         "aria-expanded": Boolean(expandedPaymentHistory[invoice.id]),
-                                                                        "aria-label": `Ver histÃ³rico de pagamentos de ${invoice.supplier}`,
-                                                                        children: expandedPaymentHistory[invoice.id] ? "âŒ„" : "â€º"
+                                                                        "aria-label": `Ver histórico de pagamentos de ${invoice.supplier}`,
+                                                                        children: expandedPaymentHistory[invoice.id] ? "⌄" : "›"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                                        lineNumber: 1181,
+                                                                        lineNumber: 1294,
                                                                         columnNumber: 29
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("strong", {
                                                                         children: invoice.supplier
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                                        lineNumber: 1196,
+                                                                        lineNumber: 1309,
                                                                         columnNumber: 27
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                                lineNumber: 1179,
+                                                                lineNumber: 1292,
                                                                 columnNumber: 25
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                                 children: [
                                                                     invoice.description,
-                                                                    " Â· ",
+                                                                    " · ",
                                                                     invoice.date
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                                lineNumber: 1198,
+                                                                lineNumber: 1311,
                                                                 columnNumber: 25
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                        lineNumber: 1178,
+                                                        lineNumber: 1291,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2020,7 +2164,7 @@ function Home() {
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                                    lineNumber: 1205,
+                                                                    lineNumber: 1318,
                                                                     columnNumber: 29
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -2031,13 +2175,13 @@ function Home() {
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                                    lineNumber: 1206,
+                                                                    lineNumber: 1319,
                                                                     columnNumber: 29
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/frontend/app/page.tsx",
-                                                            lineNumber: 1204,
+                                                            lineNumber: 1317,
                                                             columnNumber: 27
                                                         }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
                                                             children: [
@@ -2045,25 +2189,25 @@ function Home() {
                                                                     children: money.format(invoice.amount)
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                                    lineNumber: 1210,
+                                                                    lineNumber: 1323,
                                                                     columnNumber: 29
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                                    children: invoice.type === "labor" ? "MÃ£o de obra Â· abatida ao orÃ§amento" : "Despesa geral"
+                                                                    children: invoice.type === "labor" ? "Mão de obra · abatida ao orçamento" : "Despesa geral"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                                    lineNumber: 1211,
+                                                                    lineNumber: 1324,
                                                                     columnNumber: 29
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/frontend/app/page.tsx",
-                                                            lineNumber: 1209,
+                                                            lineNumber: 1322,
                                                             columnNumber: 27
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                        lineNumber: 1202,
+                                                        lineNumber: 1315,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2072,20 +2216,20 @@ function Home() {
                                                         onClick: ()=>removeInvoice(invoice.id),
                                                         "aria-label": `Remover fatura ${invoice.supplier}`,
                                                         title: "Remover",
-                                                        children: "Ã—"
+                                                        children: "×"
                                                     }, void 0, false, {
                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                        lineNumber: 1219,
+                                                        lineNumber: 1332,
                                                         columnNumber: 23
                                                     }, this),
                                                     invoice.type === "extra" && expandedPaymentHistory[invoice.id] && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                         className: "extra-payment-history",
                                                         children: [
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("strong", {
-                                                                children: "HistÃ³rico de pagamentos"
+                                                                children: "Histórico de pagamentos"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                                lineNumber: 1230,
+                                                                lineNumber: 1343,
                                                                 columnNumber: 27
                                                             }, this),
                                                             invoice.payments.length ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2093,24 +2237,24 @@ function Home() {
                                                                 children: invoice.payments.map((payment)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                                         children: [
                                                                             payment.date,
-                                                                            " Â· ",
+                                                                            " · ",
                                                                             money.format(payment.amount)
                                                                         ]
                                                                     }, payment.id, true, {
                                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                                        lineNumber: 1234,
+                                                                        lineNumber: 1347,
                                                                         columnNumber: 33
                                                                     }, this))
                                                             }, void 0, false, {
                                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                                lineNumber: 1232,
+                                                                lineNumber: 1345,
                                                                 columnNumber: 29
                                                             }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                                 className: "no-payments",
                                                                 children: "Ainda sem pagamentos registados."
                                                             }, void 0, false, {
                                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                                lineNumber: 1240,
+                                                                lineNumber: 1353,
                                                                 columnNumber: 29
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
@@ -2125,7 +2269,7 @@ function Home() {
                                                                         onChange: (event)=>updateExtraPayment(invoice.id, event.target.value)
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                                        lineNumber: 1244,
+                                                                        lineNumber: 1357,
                                                                         columnNumber: 29
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2134,50 +2278,50 @@ function Home() {
                                                                         children: "Registar"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                                        lineNumber: 1254,
+                                                                        lineNumber: 1367,
                                                                         columnNumber: 29
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                                lineNumber: 1242,
+                                                                lineNumber: 1355,
                                                                 columnNumber: 27
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/frontend/app/page.tsx",
-                                                        lineNumber: 1229,
+                                                        lineNumber: 1342,
                                                         columnNumber: 25
                                                     }, this)
                                                 ]
                                             }, invoice.id, true, {
                                                 fileName: "[project]/frontend/app/page.tsx",
-                                                lineNumber: 1174,
+                                                lineNumber: 1287,
                                                 columnNumber: 21
                                             }, this)),
                                         detailInvoices.filter((invoice)=>workDetailTab === "extra" ? invoice.type === "extra" : invoice.type === workDetailTab).length === 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                             className: "empty-detail",
-                                            children: "Ainda nÃ£o existem faturas nesta aba."
+                                            children: "Ainda não existem faturas nesta aba."
                                         }, void 0, false, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 1267,
+                                            lineNumber: 1380,
                                             columnNumber: 19
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/frontend/app/page.tsx",
-                                    lineNumber: 1129,
+                                    lineNumber: 1242,
                                     columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/frontend/app/page.tsx",
-                            lineNumber: 920,
+                            lineNumber: 1001,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/frontend/app/page.tsx",
-                        lineNumber: 912,
+                        lineNumber: 993,
                         columnNumber: 11
                     }, this),
                     detailWork && invoiceEntryType && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2199,10 +2343,10 @@ function Home() {
                                             children: [
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                                     className: "eyebrow",
-                                                    children: invoiceEntryType === "extra" ? "novo extra" : invoiceEntryType === "labor" ? "nova mÃ£o de obra" : "nova fatura"
+                                                    children: invoiceEntryType === "extra" ? "novo extra" : invoiceEntryType === "labor" ? "nova mão de obra" : "nova fatura"
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 1291,
+                                                    lineNumber: 1404,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
@@ -2210,17 +2354,17 @@ function Home() {
                                                     className: "display-font",
                                                     children: [
                                                         "Adicionar ",
-                                                        invoiceEntryType === "extra" ? "extra" : invoiceEntryType === "labor" ? "mÃ£o de obra" : "fatura"
+                                                        invoiceEntryType === "extra" ? "extra" : invoiceEntryType === "labor" ? "mão de obra" : "fatura"
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 1298,
+                                                    lineNumber: 1411,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 1290,
+                                            lineNumber: 1403,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2228,16 +2372,16 @@ function Home() {
                                             type: "button",
                                             onClick: ()=>setInvoiceEntryType(null),
                                             "aria-label": "Fechar",
-                                            children: "Ã—"
+                                            children: "×"
                                         }, void 0, false, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 1306,
+                                            lineNumber: 1419,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/frontend/app/page.tsx",
-                                    lineNumber: 1289,
+                                    lineNumber: 1402,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2245,24 +2389,24 @@ function Home() {
                                     children: "Carrega o documento para preencher os dados automaticamente ou insere-os manualmente."
                                 }, void 0, false, {
                                     fileName: "[project]/frontend/app/page.tsx",
-                                    lineNumber: 1315,
+                                    lineNumber: 1428,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
                                     className: "invoice-upload-option",
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                            children: isUploadingInvoice ? "A carregarâ€¦" : "Carregar fatura"
+                                            children: isUploadingInvoice ? "A carregar…" : "Carregar fatura"
                                         }, void 0, false, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 1319,
+                                            lineNumber: 1432,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("small", {
-                                            children: "Imagem ou PDF â€” a leitura Ã© feita no teu dispositivo"
+                                            children: "Imagem ou PDF — a leitura é feita no teu dispositivo"
                                         }, void 0, false, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 1320,
+                                            lineNumber: 1433,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -2272,13 +2416,13 @@ function Home() {
                                             onChange: (event)=>handleInvoiceUpload(event)
                                         }, void 0, false, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 1321,
+                                            lineNumber: 1434,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/frontend/app/page.tsx",
-                                    lineNumber: 1318,
+                                    lineNumber: 1431,
                                     columnNumber: 15
                                 }, this),
                                 ocrNotice && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2287,7 +2431,7 @@ function Home() {
                                     children: ocrNotice
                                 }, void 0, false, {
                                     fileName: "[project]/frontend/app/page.tsx",
-                                    lineNumber: 1331,
+                                    lineNumber: 1444,
                                     columnNumber: 17
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2296,12 +2440,12 @@ function Home() {
                                         children: "ou preencher manualmente"
                                     }, void 0, false, {
                                         fileName: "[project]/frontend/app/page.tsx",
-                                        lineNumber: 1335,
+                                        lineNumber: 1448,
                                         columnNumber: 54
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/frontend/app/page.tsx",
-                                    lineNumber: 1335,
+                                    lineNumber: 1448,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -2310,7 +2454,7 @@ function Home() {
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
                                             children: [
-                                                "Fornecedor / tÃ­tulo",
+                                                "Fornecedor / título",
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                     required: true,
                                                     value: manualInvoiceSupplier,
@@ -2318,36 +2462,36 @@ function Home() {
                                                     placeholder: "Ex.: Cozinha Nova"
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 1339,
+                                                    lineNumber: 1452,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 1337,
+                                            lineNumber: 1450,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
                                             children: [
-                                                "DescriÃ§Ã£o",
+                                                "Descrição",
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                     value: manualInvoiceDescription,
                                                     onChange: (event)=>setManualInvoiceDescription(event.target.value),
                                                     placeholder: "Ex.: Ilha pedida pelo cliente"
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 1348,
+                                                    lineNumber: 1461,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 1346,
+                                            lineNumber: 1459,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
                                             children: [
-                                                "Valor total (â‚¬)",
+                                                "Valor total (€)",
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                     required: true,
                                                     type: "number",
@@ -2358,13 +2502,13 @@ function Home() {
                                                     placeholder: "0,00"
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 1356,
+                                                    lineNumber: 1469,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 1354,
+                                            lineNumber: 1467,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
@@ -2378,13 +2522,13 @@ function Home() {
                                                     onChange: (event)=>setManualInvoiceDate(event.target.value)
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 1368,
+                                                    lineNumber: 1481,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 1366,
+                                            lineNumber: 1479,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
@@ -2396,19 +2540,19 @@ function Home() {
                                                     onChange: (event)=>setUseCurrentInvoiceDate(event.target.checked)
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 1377,
+                                                    lineNumber: 1490,
                                                     columnNumber: 19
                                                 }, this),
                                                 "Usar data de hoje"
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 1376,
+                                            lineNumber: 1489,
                                             columnNumber: 17
                                         }, this),
                                         invoiceEntryType === "extra" && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
                                             children: [
-                                                "Valor jÃ¡ pago (â‚¬)",
+                                                "Valor já pago (€)",
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                     type: "number",
                                                     min: "0",
@@ -2419,13 +2563,13 @@ function Home() {
                                                     placeholder: "0,00"
                                                 }, void 0, false, {
                                                     fileName: "[project]/frontend/app/page.tsx",
-                                                    lineNumber: 1387,
+                                                    lineNumber: 1500,
                                                     columnNumber: 21
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 1385,
+                                            lineNumber: 1498,
                                             columnNumber: 19
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2433,44 +2577,44 @@ function Home() {
                                             type: "submit",
                                             children: [
                                                 "Guardar ",
-                                                invoiceEntryType === "extra" ? "extra" : invoiceEntryType === "labor" ? "mÃ£o de obra" : "fatura"
+                                                invoiceEntryType === "extra" ? "extra" : invoiceEntryType === "labor" ? "mão de obra" : "fatura"
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/frontend/app/page.tsx",
-                                            lineNumber: 1398,
+                                            lineNumber: 1511,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/frontend/app/page.tsx",
-                                    lineNumber: 1336,
+                                    lineNumber: 1449,
                                     columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/frontend/app/page.tsx",
-                            lineNumber: 1283,
+                            lineNumber: 1396,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/frontend/app/page.tsx",
-                        lineNumber: 1276,
+                        lineNumber: 1389,
                         columnNumber: 11
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/frontend/app/page.tsx",
-                lineNumber: 612,
+                lineNumber: 693,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/frontend/app/page.tsx",
-        lineNumber: 565,
+        lineNumber: 646,
         columnNumber: 5
     }, this);
 }
-_s(Home, "0RyCVPQ6R4Lj5oP08c6K70QFIj0=", false, function() {
+_s(Home, "hnSENAsFgrhKo8Z+kwOderMqfSc=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRouter"]
     ];

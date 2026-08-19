@@ -50,7 +50,6 @@ function LoginPage() {
                 setErrorMessage("A sessão não ficou ativa. Tenta entrar novamente.");
                 return;
             }
-            // A full navigation makes the new session cookie available to the proxy.
             window.location.assign(destination);
         } catch  {
             setErrorMessage("Não foi possível contactar o Supabase. Verifica a ligação e tenta novamente.");
@@ -69,6 +68,11 @@ function LoginPage() {
                         children: "DIMOPROP"
                     }, void 0, false, {
                         fileName: "[project]/frontend/app/login/page.tsx",
+                        lineNumber: 55,
+                        columnNumber: 9
+                    }, this),
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("i", {}, void 0, false, {
+                        fileName: "[project]/frontend/app/login/page.tsx",
                         lineNumber: 56,
                         columnNumber: 9
                     }, this),
@@ -81,16 +85,11 @@ function LoginPage() {
                         fileName: "[project]/frontend/app/login/page.tsx",
                         lineNumber: 58,
                         columnNumber: 9
-                    }, this),
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("i", {}, void 0, false, {
-                        fileName: "[project]/frontend/app/login/page.tsx",
-                        lineNumber: 59,
-                        columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/frontend/app/login/page.tsx",
-                lineNumber: 55,
+                lineNumber: 54,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("section", {
@@ -108,12 +107,12 @@ function LoginPage() {
                             unoptimized: true
                         }, void 0, false, {
                             fileName: "[project]/frontend/app/login/page.tsx",
-                            lineNumber: 63,
+                            lineNumber: 62,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/frontend/app/login/page.tsx",
-                        lineNumber: 62,
+                        lineNumber: 61,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -124,7 +123,7 @@ function LoginPage() {
                                 children: "Área de trabalho"
                             }, void 0, false, {
                                 fileName: "[project]/frontend/app/login/page.tsx",
-                                lineNumber: 74,
+                                lineNumber: 73,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
@@ -132,20 +131,20 @@ function LoginPage() {
                                 children: "Bom voltar a ver-te."
                             }, void 0, false, {
                                 fileName: "[project]/frontend/app/login/page.tsx",
-                                lineNumber: 75,
+                                lineNumber: 74,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                 children: "Entra para veres as tuas obras, orçamento e faturas."
                             }, void 0, false, {
                                 fileName: "[project]/frontend/app/login/page.tsx",
-                                lineNumber: 76,
+                                lineNumber: 75,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/frontend/app/login/page.tsx",
-                        lineNumber: 73,
+                        lineNumber: 72,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -166,13 +165,13 @@ function LoginPage() {
                                         required: true
                                     }, void 0, false, {
                                         fileName: "[project]/frontend/app/login/page.tsx",
-                                        lineNumber: 79,
-                                        columnNumber: 39
+                                        lineNumber: 80,
+                                        columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/frontend/app/login/page.tsx",
-                                lineNumber: 79,
+                                lineNumber: 78,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
@@ -189,13 +188,13 @@ function LoginPage() {
                                         required: true
                                     }, void 0, false, {
                                         fileName: "[project]/frontend/app/login/page.tsx",
-                                        lineNumber: 80,
-                                        columnNumber: 50
+                                        lineNumber: 92,
+                                        columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/frontend/app/login/page.tsx",
-                                lineNumber: 80,
+                                lineNumber: 90,
                                 columnNumber: 11
                             }, this),
                             errorMessage && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -204,8 +203,8 @@ function LoginPage() {
                                 children: errorMessage
                             }, void 0, false, {
                                 fileName: "[project]/frontend/app/login/page.tsx",
-                                lineNumber: 81,
-                                columnNumber: 28
+                                lineNumber: 103,
+                                columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                 className: "auth-submit",
@@ -218,19 +217,19 @@ function LoginPage() {
                                         children: "→"
                                     }, void 0, false, {
                                         fileName: "[project]/frontend/app/login/page.tsx",
-                                        lineNumber: 82,
-                                        columnNumber: 130
+                                        lineNumber: 109,
+                                        columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/frontend/app/login/page.tsx",
-                                lineNumber: 82,
+                                lineNumber: 107,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/frontend/app/login/page.tsx",
-                        lineNumber: 78,
+                        lineNumber: 77,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -241,26 +240,26 @@ function LoginPage() {
                                 children: "●"
                             }, void 0, false, {
                                 fileName: "[project]/frontend/app/login/page.tsx",
-                                lineNumber: 84,
-                                columnNumber: 34
+                                lineNumber: 113,
+                                columnNumber: 11
                             }, this),
                             " Acesso privado para a equipa da obra."
                         ]
                     }, void 0, true, {
                         fileName: "[project]/frontend/app/login/page.tsx",
-                        lineNumber: 84,
+                        lineNumber: 112,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/frontend/app/login/page.tsx",
-                lineNumber: 61,
+                lineNumber: 60,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/frontend/app/login/page.tsx",
-        lineNumber: 54,
+        lineNumber: 53,
         columnNumber: 5
     }, this);
 }

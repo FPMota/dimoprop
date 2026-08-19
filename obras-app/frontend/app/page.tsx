@@ -5,6 +5,12 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase/client";
 
+type Transaction = {
+  id: number;
+  amount: number;
+  date: string;
+};
+
 type Invoice = {
   id: number;
   supplier: string;
@@ -15,10 +21,22 @@ type Invoice = {
   status: "Classificada" | "A rever";
   type: "normal" | "extra" | "labor";
   paid: number;
-  payments: { id: number; amount: number; date: string }[];
+  payments: Transaction[];
 };
 
-const works = [
+type Work = {
+  name: string;
+  clientId: string;
+  code: string;
+  progress: number;
+  budget: number;
+  extras: number;
+  received: number;
+  receivedPayments: Transaction[];
+  color: string;
+};
+
+const works: Work[] = [
   {
     name: "Casa do Pinhal",
     clientId: "client-martins",
@@ -27,6 +45,9 @@ const works = [
     budget: 68400,
     extras: 3250,
     received: 42000,
+    receivedPayments: [
+      { id: 1001, amount: 42000, date: "18 ago 2026" },
+    ],
     color: "terracotta",
   },
   {
@@ -37,6 +58,9 @@ const works = [
     budget: 41200,
     extras: 0,
     received: 15000,
+    receivedPayments: [
+      { id: 1002, amount: 15000, date: "17 ago 2026" },
+    ],
     color: "lime",
   },
   {
@@ -47,6 +71,9 @@ const works = [
     budget: 98700,
     extras: 8450,
     received: 92500,
+    receivedPayments: [
+      { id: 1003, amount: 92500, date: "14 ago 2026" },
+    ],
     color: "blue",
   },
 ];
@@ -133,25 +160,35 @@ const money = new Intl.NumberFormat("pt-PT", {
 
 function extractAmount(text: string) {
   const lines = text.split("\n").map((line) => line.trim()).filter(Boolean);
-  const totalLineIndex = lines
-    .map((line, index) => ({ line, index }))
-    .reverse()
-    .find(
-      ({ line }) =>
-        /\btotal\b/i.test(line) &&
-        !/sub\s*total|subtotal|iva|vat|imposto/i.test(line),
-    )?.index;
-  if (totalLineIndex === undefined) return "";
+  const amountPattern = /\d{1,3}(?:[.\s]\d{3})*(?:,\d{2}|\.\d{2})|\d+[,.]\d{2}/g;
+  const labelPattern = /(?:\btotal\b|\btotal\s+geral\b|\bvalor\s+total\b|\ba\s+pagar\b|\bmontante\b|\bimporte\b)/i;
+  const skipPattern = /sub\s*total|subtotal|iva|vat|imposto|saldo|pagamento|fatura|invoice/i;
 
-  // Alguns documentos colocam o número na linha abaixo de "TOTAL".
-  const totalArea = lines.slice(totalLineIndex, totalLineIndex + 4).join(" ");
-  const candidates = totalArea.match(/\d{1,3}(?:[.\s]\d{3})*,\d{2}|\d+[,.]\d{2}/g);
-  if (!candidates?.length) return "";
-  const candidate = candidates.at(-1)?.replace(/[€$\s]/g, "") ?? "";
-  const value = candidate.includes(",")
-    ? candidate.replace(/\./g, "").replace(",", ".")
-    : candidate;
-  return value && Number.isFinite(Number(value)) ? value : "";
+  function normalizeAmount(candidate: string) {
+    const value = candidate.replace(/[€$\s]/g, "");
+    const normalized = value.includes(",")
+      ? value.replace(/\./g, "").replace(",", ".")
+      : value;
+    return normalized && Number.isFinite(Number(normalized)) ? normalized : "";
+  }
+
+  function findLastMatch(textValue: string) {
+    const matches = textValue.match(amountPattern);
+    if (!matches?.length) return "";
+    return normalizeAmount(matches.at(-1) ?? "");
+  }
+
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    const line = lines[index];
+    if (!labelPattern.test(line) || skipPattern.test(line)) continue;
+    const amountMatch = line.match(amountPattern)?.at(-1);
+    if (amountMatch) return normalizeAmount(amountMatch);
+    const nearby = lines.slice(index, index + 3).join(" ");
+    const nearbyMatch = nearby.match(amountPattern)?.at(-1);
+    if (nearbyMatch) return normalizeAmount(nearbyMatch);
+  }
+
+  return findLastMatch(text);
 }
 
 function extractDate(text: string) {
@@ -159,6 +196,26 @@ function extractDate(text: string) {
   if (!match) return "";
   const year = match[3].length === 2 ? `20${match[3]}` : match[3];
   return `${year}-${match[2].padStart(2, "0")}-${match[1].padStart(2, "0")}`;
+}
+
+function extractDescription(text: string, fallback: string) {
+  const lines = text.split("\n").map((line) => line.trim()).filter(Boolean);
+  const noisePattern = /^(de|emitente|fornecedor|morada|address|nif|n\.?º|nº|data|fatura|invoice|ref\.?|referencia|referência|total|subtotal|iva|vat|imposto|pagamento|pago|valor|montante)/i;
+  const datePattern = /\b\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}\b/;
+  const amountPattern = /\d{1,3}(?:[.\s]\d{3})*(?:,\d{2}|\.\d{2})|\d+[,.]\d{2}/;
+
+  const candidate = lines.find(
+    (line) =>
+      line.length > 3 &&
+      !noisePattern.test(line) &&
+      !datePattern.test(line) &&
+      !amountPattern.test(line) &&
+      /[a-zA-ZÀ-ÿ]/.test(line),
+  );
+
+  if (candidate) return candidate;
+
+  return fallback;
 }
 
 function extractSupplier(text: string, fallback: string) {
@@ -175,10 +232,125 @@ function extractSupplier(text: string, fallback: string) {
         (line) =>
           line.length > 2 &&
           !/rua|avenida|av\.|travessa|estrada|fatura|data|p\.o/i.test(line),
-      );
+    );
     if (candidate) return candidate;
   }
   return fallback;
+}
+
+function decodePdfLiteralString(source: string) {
+  let result = "";
+  for (let index = 0; index < source.length; index += 1) {
+    const char = source[index];
+    if (char !== "\\") {
+      result += char;
+      continue;
+    }
+    index += 1;
+    const next = source[index];
+    switch (next) {
+      case "n":
+        result += "\n";
+        break;
+      case "r":
+        result += "\r";
+        break;
+      case "t":
+        result += "\t";
+        break;
+      case "b":
+        result += "\b";
+        break;
+      case "f":
+        result += "\f";
+        break;
+      case "(":
+      case ")":
+      case "\\":
+        result += next;
+        break;
+      case "\n":
+        break;
+      case "\r":
+        if (source[index + 1] === "\n") index += 1;
+        break;
+      default:
+        result += next ?? "";
+        break;
+    }
+  }
+  return result;
+}
+
+async function tryDecodeFlateStream(bytes: Uint8Array) {
+  if (typeof DecompressionStream === "undefined") return "";
+  try {
+    const arrayBuffer = bytes.buffer.slice(
+      bytes.byteOffset,
+      bytes.byteOffset + bytes.byteLength,
+    ) as ArrayBuffer;
+    const response = new Response(arrayBuffer).body?.pipeThrough(
+      new DecompressionStream("deflate"),
+    );
+    if (!response) return "";
+    const outputBuffer = await new Response(response).arrayBuffer();
+    return new TextDecoder("latin1").decode(new Uint8Array(outputBuffer));
+  } catch {
+    return "";
+  }
+}
+
+async function extractPdfTextFromFile(file: File) {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const rawText = new TextDecoder("latin1").decode(bytes);
+  const decodedParts: string[] = [];
+  const streamPattern = /stream\r?\n([\s\S]*?)\r?\nendstream/g;
+  let matchedStream = false;
+
+  for (const match of rawText.matchAll(streamPattern)) {
+    matchedStream = true;
+    const section = match[1] ?? "";
+    const sectionStart = (match.index ?? 0) + (match[0]?.indexOf(section) ?? 0);
+    const sectionEnd = sectionStart + section.length;
+    const rawSectionBytes = bytes.slice(sectionStart, sectionEnd);
+    const header = rawText.slice(Math.max(0, (match.index ?? 0) - 200), match.index ?? 0);
+    const candidateSection = header.includes("/FlateDecode")
+      ? (await tryDecodeFlateStream(rawSectionBytes) || section)
+      : section;
+
+    const literalMatches = Array.from(
+      candidateSection.matchAll(/\((?:\\.|[^\\)])*\)\s*Tj/g),
+      (match) => decodePdfLiteralString((match[0] ?? "").replace(/\)\s*Tj$/, "").slice(1, -1)),
+    );
+    const arrayMatches = Array.from(
+      candidateSection.matchAll(/\[((?:.|\n)*?)\]\s*TJ/g),
+      (match) =>
+        Array.from(match[1].matchAll(/\((?:\\.|[^\\)])*\)|<[^>]+>/g), (chunk) => {
+          const token = chunk[0] ?? "";
+          if (token.startsWith("(")) {
+            return decodePdfLiteralString(token.slice(1, -1));
+          }
+          const hex = token.slice(1, -1).replace(/\s+/g, "");
+          const pairs = hex.match(/.{1,2}/g) ?? [];
+          return pairs
+            .map((pair) => String.fromCharCode(Number.parseInt(pair, 16)))
+            .join("");
+        }).join(" "),
+    );
+    const plainText = [literalMatches.join(" "), arrayMatches.join(" ")]
+      .filter(Boolean)
+      .join("\n");
+    if (plainText.trim()) decodedParts.push(plainText.trim());
+  }
+
+  if (!matchedStream) {
+    decodedParts.push(rawText);
+  }
+
+  const extracted = decodedParts.join("\n").replace(/\s+\n/g, "\n").trim();
+  if (extracted) return extracted;
+
+  return rawText;
 }
 
 export default function Home() {
@@ -208,8 +380,14 @@ export default function Home() {
   const [paymentAmounts, setPaymentAmounts] = useState<Record<number, string>>(
     {},
   );
+  const [workPaymentAmounts, setWorkPaymentAmounts] = useState<
+    Record<string, string>
+  >({});
   const [expandedPaymentHistory, setExpandedPaymentHistory] = useState<
     Record<number, boolean>
+  >({});
+  const [expandedWorkPayments, setExpandedWorkPayments] = useState<
+    Record<string, boolean>
   >({});
   const [invoiceEntryType, setInvoiceEntryType] = useState<Invoice["type"] | null>(
     null,
@@ -292,14 +470,30 @@ export default function Home() {
   function handleCreateWork(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const clientId = newWorkClient || `client-local-${Date.now()}`;
+    const budget = Number(newWorkBudget) || 0;
+    const received = Math.max(0, Math.min(Number(newWorkReceived) || 0, budget));
     const newWork = {
       name: newWorkName,
       clientId,
       code: `OB-${String(workItems.length + 25).padStart(3, "0")}`,
       progress: 0,
-      budget: Number(newWorkBudget) || 0,
+      budget,
       extras: 0,
-      received: Number(newWorkReceived) || 0,
+      received,
+      receivedPayments:
+        received > 0
+          ? [
+              {
+                id: Date.now(),
+                amount: received,
+                date: new Date().toLocaleDateString("pt-PT", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                }),
+              },
+            ]
+          : [],
       color: "blue",
     };
     setWorkItems((current) => [...current, newWork]);
@@ -346,6 +540,41 @@ export default function Home() {
       }),
     );
     setPaymentAmounts((current) => ({ ...current, [invoiceId]: "" }));
+  }
+
+  function updateWorkPayment(workName: string, value: string) {
+    setWorkPaymentAmounts((current) => ({ ...current, [workName]: value }));
+  }
+
+  function registerWorkPayment(workName: string) {
+    const amount = Math.max(0, Number(workPaymentAmounts[workName]) || 0);
+    if (!amount) return;
+
+    setWorkItems((current) =>
+      current.map((work) => {
+        if (work.name !== workName) return work;
+        const remaining = Math.max(0, work.budget - work.received);
+        const payment = Math.min(amount, remaining);
+        if (!payment) return work;
+        return {
+          ...work,
+          received: work.received + payment,
+          receivedPayments: [
+            ...work.receivedPayments,
+            {
+              id: Date.now(),
+              amount: payment,
+              date: new Date().toLocaleDateString("pt-PT", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              }),
+            },
+          ],
+        };
+      }),
+    );
+    setWorkPaymentAmounts((current) => ({ ...current, [workName]: "" }));
   }
 
   function removeInvoice(invoiceId: number) {
@@ -411,24 +640,41 @@ export default function Home() {
     const file = event.target.files?.[0];
     if (!file) return;
     setIsUploadingInvoice(true);
-    setOcrNotice("A ler a imagem neste dispositivo…");
+    const isPdf =
+      file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+    setOcrNotice(
+      isPdf ? "A ler o PDF neste dispositivo..." : "A ler a imagem neste dispositivo...",
+    );
 
     try {
-      if (!file.type.startsWith("image/")) {
-        throw new Error("O OCR local lê imagens. Para PDF, preenche os campos manualmente.");
+      let text = "";
+      if (isPdf) {
+        text = await extractPdfTextFromFile(file);
+      } else if (file.type.startsWith("image/")) {
+        const { recognize } = await import("tesseract.js");
+        const result = await recognize(file, "por");
+        text = result.data.text;
+      } else {
+        throw new Error("Este ficheiro não é uma imagem nem um PDF.");
       }
-      const { recognize } = await import("tesseract.js");
-      const result = await recognize(file, "por");
-      const text = result.data.text;
+
       setManualInvoiceSupplier(
         extractSupplier(text, file.name.replace(/\.[^/.]+$/, "")),
       );
       const detectedDate = extractDate(text);
-      setManualInvoiceDescription(detectedDate ? `Fatura de ${detectedDate}` : "");
+      const detectedDescription = extractDescription(
+        text,
+        file.name.replace(/\.[^/.]+$/, ""),
+      );
+      setManualInvoiceDescription(detectedDescription || "");
       setManualInvoiceAmount(extractAmount(text));
       setManualInvoiceDate(detectedDate);
       setUseCurrentInvoiceDate(!detectedDate);
-      setOcrNotice("Dados lidos localmente. Confirma ou corrige os campos antes de guardar.");
+      setOcrNotice(
+        isPdf
+          ? "PDF lido localmente. Confirma a descrição e o valor antes de guardar."
+          : "Dados lidos localmente. Confirma ou corrige os campos antes de guardar.",
+      );
     } catch (error) {
       setManualInvoiceSupplier(file.name.replace(/\.[^/.]+$/, ""));
       setOcrNotice(
@@ -879,10 +1125,6 @@ export default function Home() {
                   </strong>
                 </div>
                 <div>
-                  <span>Extras</span>
-                  <strong>{money.format(detailWork.extras)}</strong>
-                </div>
-                <div>
                   <span>Mão de obra</span>
                   <strong>
                     {money.format(
@@ -893,10 +1135,65 @@ export default function Home() {
                   </strong>
                 </div>
                 <div>
+                  <span>Extras</span>
+                  <strong>{money.format(detailWork.extras)}</strong>
+                </div>
+                <div className="received-metric">
                   <span>Pagamentos</span>
                   <strong className="received-value">
                     {money.format(detailWork.received)}
                   </strong>
+                  <button
+                    className="received-toggle"
+                    type="button"
+                    onClick={() =>
+                      setExpandedWorkPayments((current) => ({
+                        ...current,
+                        [detailWork.name]: !current[detailWork.name],
+                      }))
+                    }
+                    aria-expanded={Boolean(expandedWorkPayments[detailWork.name])}
+                    aria-label={`Adicionar pagamento a ${detailWork.name}`}
+                  >
+                    {expandedWorkPayments[detailWork.name] ? "−" : "+"}
+                  </button>
+                  {expandedWorkPayments[detailWork.name] && (
+                    <div className="work-payment-history">
+                      <strong>Histórico de pagamentos</strong>
+                      {detailWork.receivedPayments.length ? (
+                        <div className="payment-history-list">
+                          {detailWork.receivedPayments.map((payment) => (
+                            <span key={payment.id}>
+                              {payment.date} · {money.format(payment.amount)}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="no-payments">
+                          Ainda sem pagamentos registados.
+                        </span>
+                      )}
+                      <label>
+                        Adicionar pagamento
+                        <input
+                          type="number"
+                          min="0"
+                          max={Math.max(0, detailWork.budget - detailWork.received)}
+                          step="0.01"
+                          value={workPaymentAmounts[detailWork.name] ?? ""}
+                          onChange={(event) =>
+                            updateWorkPayment(detailWork.name, event.target.value)
+                          }
+                        />
+                        <button
+                          type="button"
+                          onClick={() => registerWorkPayment(detailWork.name)}
+                        >
+                          Registar
+                        </button>
+                      </label>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="work-detail-tabs">
@@ -914,31 +1211,6 @@ export default function Home() {
                     onClick={() => openInvoiceEntry("normal")}
                     title="Adicionar fatura normal"
                     aria-label="Adicionar fatura normal"
-                  >
-                    +
-                  </button>
-                </div>
-                <div className="tab-control">
-                  <button
-                    className={workDetailTab === "extra" ? "active" : ""}
-                    type="button"
-                    onClick={() => setWorkDetailTab("extra")}
-                  >
-                    Extras{" "}
-                    <b>
-                      {
-                        detailInvoices.filter(
-                          (invoice) => invoice.type === "extra",
-                        ).length
-                      }
-                    </b>
-                  </button>
-                  <button
-                    className="tab-add-invoice"
-                    type="button"
-                    onClick={() => openInvoiceEntry("extra")}
-                    title="Adicionar extra"
-                    aria-label="Adicionar extra"
                   >
                     +
                   </button>
@@ -964,6 +1236,31 @@ export default function Home() {
                     onClick={() => openInvoiceEntry("labor")}
                     title="Adicionar mão de obra"
                     aria-label="Adicionar mão de obra"
+                  >
+                    +
+                  </button>
+                </div>
+                <div className="tab-control">
+                  <button
+                    className={workDetailTab === "extra" ? "active" : ""}
+                    type="button"
+                    onClick={() => setWorkDetailTab("extra")}
+                  >
+                    Extras{" "}
+                    <b>
+                      {
+                        detailInvoices.filter(
+                          (invoice) => invoice.type === "extra",
+                        ).length
+                      }
+                    </b>
+                  </button>
+                  <button
+                    className="tab-add-invoice"
+                    type="button"
+                    onClick={() => openInvoiceEntry("extra")}
+                    title="Adicionar extra"
+                    aria-label="Adicionar extra"
                   >
                     +
                   </button>
@@ -1160,10 +1457,10 @@ export default function Home() {
               </p>
               <label className="invoice-upload-option">
                 <span>{isUploadingInvoice ? "A carregar…" : "Carregar fatura"}</span>
-                <small>Imagem — a leitura é feita no teu dispositivo</small>
+                <small>Imagem ou PDF — a leitura é feita no teu dispositivo</small>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/*,application/pdf"
                   disabled={isUploadingInvoice}
                   onChange={(event) =>
                     handleInvoiceUpload(event)

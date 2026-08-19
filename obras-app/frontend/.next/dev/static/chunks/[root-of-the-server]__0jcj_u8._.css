@@ -1588,6 +1588,70 @@ body {
   font-size: .7rem;
 }
 
+.received-metric {
+  gap: .45rem;
+  display: grid;
+}
+
+.received-toggle {
+  background: var(--ink);
+  color: var(--paper);
+  cursor: pointer;
+  border: 1px solid #25333a26;
+  border-radius: .5rem;
+  justify-content: center;
+  align-self: flex-end;
+  align-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  font-size: 1rem;
+  display: inline-flex;
+  box-shadow: 0 2px 5px #26536829;
+}
+
+.received-toggle:hover {
+  background: #527b42;
+  transform: translateY(-1px);
+}
+
+.work-payment-history {
+  border-top: 1px solid var(--line);
+  grid-column: 1 / -1;
+  gap: .55rem;
+  margin-top: .15rem;
+  padding-top: .8rem;
+  display: grid;
+}
+
+.work-payment-history > strong {
+  font-size: .73rem;
+}
+
+.work-payment-history label {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .4rem;
+  display: flex;
+}
+
+.work-payment-history input {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: .35rem;
+  width: 5.5rem;
+  padding: .35rem;
+}
+
+.work-payment-history label button {
+  background: var(--ink);
+  color: var(--paper);
+  cursor: pointer;
+  border: 0;
+  border-radius: .35rem;
+  padding: .42rem .6rem;
+  font-size: .7rem;
+}
+
 @media (max-width: 640px) {
   .extras-list-summary {
     grid-template-columns: 1fr;
@@ -2862,10 +2926,14 @@ body {
 }
 
 .work-detail-finance > div:nth-child(3) {
+  background: linear-gradient(145deg, #e6f0e4, var(--surface));
+}
+
+.work-detail-finance > div:nth-child(4) {
   background: linear-gradient(145deg, #f6e3db, var(--surface));
 }
 
-.work-detail-finance > div:nth-child(4), .work-detail-finance > div:nth-child(5) {
+.work-detail-finance > div:nth-child(5) {
   background: linear-gradient(145deg, #e6f0e4, var(--surface));
 }
 

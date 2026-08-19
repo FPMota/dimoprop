@@ -81,3 +81,36 @@ Para criar o acesso do teu pai: `Supabase Dashboard → Authentication → Users
 - TypeScript em modo estrito
 - Tailwind CSS v4
 - ESLint
+
+## Deploy na Vercel
+
+O projeto está numa estrutura de monorepo e a app web vive em `frontend/`.
+
+### No dashboard da Vercel
+
+Ao importar o repositório:
+
+- define `frontend` como `Root Directory`;
+- confirma que o framework detetado é `Next.js`;
+- adiciona as variáveis de ambiente do Supabase:
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+
+### Via Vercel CLI
+
+Se quiseres testar localmente o deploy ou fazer deploy pela linha de comandos:
+
+```bash
+cd frontend
+vercel
+```
+
+Ou a partir da raiz do repositório:
+
+```bash
+vercel --cwd frontend
+```
+
+### Depois do deploy
+
+O site passa a abrir num link público `https://...vercel.app` e já fica acessível no telemóvel. Mais tarde, podemos adicionar suporte de instalação como app no ecrã principal.

@@ -39,3 +39,27 @@ orçamento disponível = budget + extras - total das faturas
 ```
 
 Na tabela `works`, estes campos devem ser valores monetários `numeric(12, 2)` e começar em `0`. Não se deve substituir o orçamento original pelos extras, porque o pai precisa de distinguir o que foi contratado do que apareceu depois.
+
+## Faturas por obra
+
+No frontend, cada obra tem duas vistas:
+
+- faturas normais: despesas gerais e mão de obra;
+- extras: pedidos adicionais do cliente, com `amount` e `paid_amount` para acompanhar o que já foi pago.
+
+Para distinguir estes casos, a tabela `invoices` deverá ter:
+
+```sql
+alter table public.invoices
+add column if not exists type text not null default 'normal'
+check (type in ('normal', 'extra', 'labor'));
+
+alter table public.invoices
+add column if not exists paid_amount numeric(12, 2) not null default 0;
+```
+
+O lucro fica oculto na interface e é calculado quando solicitado:
+
+```text
+lucro = orçamento + extras - faturas normais - mão de obra
+```

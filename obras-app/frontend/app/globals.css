@@ -497,14 +497,14 @@ body {
 }
 
 /* Login: mais leve, colorido e coerente com o painel. */
-.auth-shell { background-color: #31515e; background-image: linear-gradient(115deg, rgba(20,45,57,.86) 0%, rgba(40,78,92,.69) 48%, rgba(82,123,66,.42) 100%), url("/dimoprop-house.jpg"); isolation: isolate; justify-content: flex-start; padding: clamp(1.25rem, 5vw, 5rem); }
+.auth-shell { align-items: center; background-color: #31515e; background-image: linear-gradient(115deg, rgba(20,45,57,.86) 0%, rgba(40,78,92,.69) 48%, rgba(82,123,66,.42) 100%), url("/dimoprop-house.jpg"); display: flex; isolation: isolate; justify-content: center; min-height: 100svh; padding: clamp(1.25rem, 5vw, 5rem); position: relative; }
 .auth-shell::before { background: radial-gradient(circle at 82% 20%, rgba(207,231,162,.45), transparent 0 18%), radial-gradient(circle at 77% 76%, rgba(159,199,228,.42), transparent 0 20%); content: ""; inset: 0; pointer-events: none; position: absolute; z-index: -1; }
 .auth-atmosphere { bottom: 0; color: rgba(243,248,248,.92); font-family: var(--font-display), sans-serif; font-size: clamp(3rem, 10vw, 8.5rem); font-weight: 800; letter-spacing: -.1em; line-height: .8; overflow: hidden; pointer-events: none; position: absolute; right: clamp(1.5rem, 8vw, 8rem); text-align: right; top: 0; width: min(49vw, 50rem); }
 .auth-atmosphere > span { bottom: clamp(3rem, 10vh, 8rem); opacity: .2; position: absolute; right: 0; transform: rotate(-8deg); }
 .auth-atmosphere i { border: 1px solid rgba(207,231,162,.42); border-radius: 50%; display: block; height: clamp(13rem, 28vw, 26rem); position: absolute; right: -8rem; top: 12%; width: clamp(13rem, 28vw, 26rem); }
 .auth-atmosphere i:nth-of-type(2) { height: clamp(18rem, 37vw, 34rem); right: -12rem; top: 6%; width: clamp(18rem, 37vw, 34rem); }
 .auth-atmosphere i:nth-of-type(3) { height: clamp(24rem, 46vw, 42rem); right: -16rem; top: -2%; width: clamp(24rem, 46vw, 42rem); }
-.auth-card { animation: soft-rise 500ms ease both; backdrop-filter: blur(14px); background: rgba(243,248,248,.94); border: 1px solid rgba(255,255,255,.75); border-radius: 1.5rem; box-shadow: 0 2rem 4.5rem rgba(10,33,43,.32); max-width: 30rem; padding: clamp(1.7rem, 4vw, 3rem); }
+.auth-card { animation: soft-rise 500ms ease both; backdrop-filter: blur(14px); background: rgba(243,248,248,.94); border: 1px solid rgba(255,255,255,.75); border-radius: 1.5rem; box-shadow: 0 2rem 4.5rem rgba(10,33,43,.32); margin: 0 auto; max-width: 30rem; padding: clamp(1.7rem, 4vw, 3rem); width: min(100%, 30rem); z-index: 1; }
 .auth-brand { background: linear-gradient(135deg, #e1f0f4, #edf6dc); border: 1px solid rgba(38,83,104,.13); border-radius: .9rem; margin-bottom: 2rem; padding: .8rem 1rem; }
 .auth-brand .company-logo { max-width: 13rem; }
 .auth-heading { text-align: left; }
@@ -526,4 +526,188 @@ body {
   .auth-shell { align-items: center; justify-content: center; }
   .auth-atmosphere { opacity: .45; right: -6rem; width: 100%; }
   .auth-card { max-width: 31rem; }
+}
+
+@media (max-width: 560px) {
+  .auth-shell {
+    align-items: flex-start;
+    background-image: linear-gradient(160deg, rgba(16,35,43,.56), rgba(45,82,92,.2) 45%, rgba(18,38,44,.46)), url("/dimoprop-house.jpg");
+    height: auto;
+    justify-content: center;
+    min-height: 100svh;
+    overflow-y: auto;
+    padding: 1.05rem .95rem;
+  }
+
+  .auth-shell::before,
+  .auth-atmosphere {
+    display: none;
+  }
+
+  .auth-card {
+    backdrop-filter: blur(18px);
+    background: rgba(250,253,251,.9);
+    border: 1px solid rgba(255,255,255,.9);
+    border-radius: 1rem;
+    box-shadow: 0 18px 45px rgba(8,24,34,.26);
+    margin: .35rem auto 1.25rem;
+    max-width: 20.5rem;
+    padding: .95rem;
+  }
+
+  .auth-brand {
+    background: rgba(255,255,255,.58);
+    border-color: rgba(255,255,255,.74);
+    border-radius: .7rem;
+    justify-content: flex-start;
+    margin-bottom: .9rem;
+    padding: .55rem .65rem;
+  }
+
+  .auth-brand .company-logo {
+    max-width: 10.25rem;
+  }
+
+  .auth-heading .eyebrow {
+    font-size: .56rem;
+    letter-spacing: 0;
+    padding: .28rem .5rem;
+  }
+
+  .auth-heading h1 {
+    font-size: 1.9rem;
+    letter-spacing: 0;
+    line-height: .98;
+    margin: .55rem 0 .25rem;
+  }
+
+  .auth-heading > p:last-child,
+  .auth-note {
+    display: none;
+  }
+
+  .auth-form {
+    gap: .7rem;
+    margin-top: 1rem;
+  }
+
+  .auth-form label {
+    font-size: .68rem;
+    gap: .35rem;
+  }
+
+  .auth-form input {
+    border-radius: .62rem;
+    font-size: .92rem;
+    min-height: 2.85rem;
+    padding: .72rem .82rem;
+  }
+
+  .auth-submit {
+    border-radius: .65rem;
+    font-size: .88rem;
+    margin-top: .25rem;
+    min-height: 2.95rem;
+    padding: .72rem .82rem;
+  }
+
+  .auth-submit span {
+    height: 1.55rem;
+    line-height: 1.45rem;
+    width: 1.55rem;
+  }
+
+  .dashboard-sidebar,
+  .sidebar-collapsed .dashboard-sidebar {
+    padding: .55rem .75rem;
+  }
+
+  .sidebar-topbar,
+  .sidebar-collapsed .sidebar-topbar {
+    align-items: center;
+    flex-direction: row;
+    gap: .6rem;
+    justify-content: space-between;
+    min-height: 2.8rem;
+  }
+
+  .brand-lockup,
+  .sidebar-collapsed .brand-lockup {
+    padding: 0;
+  }
+
+  .dashboard-sidebar .company-logo-small,
+  .sidebar-collapsed .dashboard-sidebar .company-logo-small {
+    max-width: 7.3rem;
+    width: 7.3rem;
+  }
+
+  .sidebar-toggle,
+  .sidebar-collapsed .sidebar-toggle {
+    align-self: center;
+    border-radius: .55rem;
+    height: 2.2rem;
+    margin-left: 0;
+    width: 2.2rem;
+  }
+
+  .sidebar-nav,
+  .sidebar-collapsed .sidebar-nav {
+    border-top: 1px solid rgba(8,24,34,.08);
+    gap: .35rem;
+    margin-top: .45rem;
+    padding-top: .45rem;
+  }
+
+  .nav-item,
+  .sidebar-collapsed .nav-item {
+    border-radius: .55rem;
+    font-size: .72rem;
+    min-height: 2.15rem;
+    padding: .42rem .5rem;
+  }
+
+  .dashboard-content {
+    padding: .9rem .85rem 2.5rem;
+  }
+
+  .dashboard-header {
+    align-items: center;
+    border-radius: .8rem;
+    gap: .75rem;
+    margin-bottom: 1.15rem;
+    padding: .65rem .75rem;
+  }
+
+  .dashboard-header .eyebrow {
+    display: none;
+  }
+
+  .dashboard-title {
+    font-size: 1.55rem;
+    letter-spacing: 0;
+    margin-top: 0;
+  }
+
+  .header-actions {
+    align-items: center;
+    flex-direction: row;
+    gap: .45rem;
+  }
+
+  .new-client-button {
+    font-size: .68rem;
+    padding: .52rem .65rem;
+  }
+
+  .profile-chip {
+    gap: .35rem;
+    padding: .15rem;
+  }
+
+  .profile-avatar {
+    font-size: .62rem;
+    height: 1.85rem;
+    width: 1.85rem;
+  }
 }

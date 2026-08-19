@@ -8,6 +8,12 @@ type CookieToSet = {
 };
 
 export async function proxy(request: NextRequest) {
+  // Public assets must stay reachable before checking authentication.
+  // Some development requests do not match the configured matcher as expected.
+  if (request.nextUrl.pathname.includes(".")) {
+    return NextResponse.next();
+  }
+
   const pendingCookies: CookieToSet[] = [];
 
   const supabase = createServerClient(
@@ -60,5 +66,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\..*).*)"],
 };

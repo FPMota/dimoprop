@@ -1,22 +1,14 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase/client";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) router.replace("/");
-    });
-  }, [router]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -24,7 +16,7 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
         setErrorMessage("Email ou palavra-passe incorretos.");
@@ -33,11 +25,23 @@ export default function LoginPage() {
 
       const nextPath = new URLSearchParams(window.location.search).get("next");
       const destination = nextPath?.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/";
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
+      const session = data.session;
+      if (!session) {
         setErrorMessage("A sessão não ficou ativa. Tenta entrar novamente.");
         return;
       }
+
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+      });
+
+      if (sessionError) {
+        setErrorMessage("A sessão não ficou ativa. Tenta entrar novamente.");
+        return;
+      }
+
+      // A full navigation makes the new session cookie available to the proxy.
       window.location.assign(destination);
     } catch {
       setErrorMessage("Não foi possível contactar o Supabase. Verifica a ligação e tenta novamente.");
@@ -56,7 +60,15 @@ export default function LoginPage() {
       </div>
       <section className="auth-card">
         <div className="auth-brand">
-          <Image className="company-logo" src="/dimoprop-logo.svg" alt="Dimoprop Construções e Remodelações" width={720} height={270} priority />
+          <Image
+            className="company-logo"
+            src="/dimoprop-logo.svg"
+            alt="Dimoprop Construções e Remodelações"
+            width={720}
+            height={270}
+            priority
+            unoptimized
+          />
         </div>
         <div className="auth-heading">
           <p className="eyebrow">Área de trabalho</p>

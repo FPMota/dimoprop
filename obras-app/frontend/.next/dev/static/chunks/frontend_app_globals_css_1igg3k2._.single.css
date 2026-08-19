@@ -3102,6 +3102,182 @@ body {
   }
 }
 
+@media (max-width: 560px) {
+  .auth-shell {
+    background-image: linear-gradient(160deg, #10232b8f, #2d525c33 45%, #12262c75), url("/dimoprop-house.jpg");
+    justify-content: center;
+    align-items: flex-start;
+    height: auto;
+    min-height: 100svh;
+    padding: 1.05rem .95rem;
+    overflow-y: auto;
+  }
+
+  .auth-shell:before, .auth-atmosphere {
+    display: none;
+  }
+
+  .auth-card {
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+    background: #fafdfbe6;
+    border: 1px solid #ffffffe6;
+    border-radius: 1rem;
+    max-width: 20.5rem;
+    margin: .35rem auto 1.25rem;
+    padding: .95rem;
+    box-shadow: 0 18px 45px #08182242;
+  }
+
+  .auth-brand {
+    background: #ffffff94;
+    border-color: #ffffffbd;
+    border-radius: .7rem;
+    justify-content: flex-start;
+    margin-bottom: .9rem;
+    padding: .55rem .65rem;
+  }
+
+  .auth-brand .company-logo {
+    max-width: 10.25rem;
+  }
+
+  .auth-heading .eyebrow {
+    letter-spacing: 0;
+    padding: .28rem .5rem;
+    font-size: .56rem;
+  }
+
+  .auth-heading h1 {
+    letter-spacing: 0;
+    margin: .55rem 0 .25rem;
+    font-size: 1.9rem;
+    line-height: .98;
+  }
+
+  .auth-heading > p:last-child, .auth-note {
+    display: none;
+  }
+
+  .auth-form {
+    gap: .7rem;
+    margin-top: 1rem;
+  }
+
+  .auth-form label {
+    gap: .35rem;
+    font-size: .68rem;
+  }
+
+  .auth-form input {
+    border-radius: .62rem;
+    min-height: 2.85rem;
+    padding: .72rem .82rem;
+    font-size: .92rem;
+  }
+
+  .auth-submit {
+    border-radius: .65rem;
+    min-height: 2.95rem;
+    margin-top: .25rem;
+    padding: .72rem .82rem;
+    font-size: .88rem;
+  }
+
+  .auth-submit span {
+    width: 1.55rem;
+    height: 1.55rem;
+    line-height: 1.45rem;
+  }
+
+  .dashboard-sidebar, .sidebar-collapsed .dashboard-sidebar {
+    padding: .55rem .75rem;
+  }
+
+  .sidebar-topbar, .sidebar-collapsed .sidebar-topbar {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: .6rem;
+    min-height: 2.8rem;
+  }
+
+  .brand-lockup, .sidebar-collapsed .brand-lockup {
+    padding: 0;
+  }
+
+  .dashboard-sidebar .company-logo-small, .sidebar-collapsed .dashboard-sidebar .company-logo-small {
+    width: 7.3rem;
+    max-width: 7.3rem;
+  }
+
+  .sidebar-toggle, .sidebar-collapsed .sidebar-toggle {
+    border-radius: .55rem;
+    align-self: center;
+    width: 2.2rem;
+    height: 2.2rem;
+    margin-left: 0;
+  }
+
+  .sidebar-nav, .sidebar-collapsed .sidebar-nav {
+    border-top: 1px solid #08182214;
+    gap: .35rem;
+    margin-top: .45rem;
+    padding-top: .45rem;
+  }
+
+  .nav-item, .sidebar-collapsed .nav-item {
+    border-radius: .55rem;
+    min-height: 2.15rem;
+    padding: .42rem .5rem;
+    font-size: .72rem;
+  }
+
+  .dashboard-content {
+    padding: .9rem .85rem 2.5rem;
+  }
+
+  .dashboard-header {
+    border-radius: .8rem;
+    align-items: center;
+    gap: .75rem;
+    margin-bottom: 1.15rem;
+    padding: .65rem .75rem;
+  }
+
+  .dashboard-header .eyebrow {
+    display: none;
+  }
+
+  .dashboard-title {
+    letter-spacing: 0;
+    margin-top: 0;
+    font-size: 1.55rem;
+  }
+
+  .header-actions {
+    flex-direction: row;
+    align-items: center;
+    gap: .45rem;
+  }
+
+  .new-client-button {
+    padding: .52rem .65rem;
+    font-size: .68rem;
+  }
+
+  .profile-chip {
+    gap: .35rem;
+    padding: .15rem;
+  }
+
+  .profile-avatar {
+    width: 1.85rem;
+    height: 1.85rem;
+    font-size: .62rem;
+  }
+}
+
 @property --tw-rotate-x {
   syntax: "*";
   inherits: false

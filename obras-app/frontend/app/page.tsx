@@ -68,7 +68,7 @@ function extractAmount(text: string) {
   const skipPattern = /sub\s*total|subtotal|iva|vat|imposto|saldo|pagamento|fatura|invoice/i;
 
   function normalizeAmount(candidate: string) {
-    const value = candidate.replace(/[â‚¬$\s]/g, "");
+    const value = candidate.replace(/[€$\s]/g, "");
     const normalized = value.includes(",")
       ? value.replace(/\./g, "").replace(",", ".")
       : value;
@@ -103,7 +103,7 @@ function extractDate(text: string) {
 
 function extractDescription(text: string, fallback: string) {
   const lines = text.split("\n").map((line) => line.trim()).filter(Boolean);
-  const noisePattern = /^(de|emitente|fornecedor|morada|address|nif|n\.?Âº|nÂº|data|fatura|invoice|ref\.?|referencia|referÃªncia|total|subtotal|iva|vat|imposto|pagamento|pago|valor|montante)/i;
+  const noisePattern = /^(de|emitente|fornecedor|morada|address|nif|n\.?º|nº|data|fatura|invoice|ref\.?|referencia|referência|total|subtotal|iva|vat|imposto|pagamento|pago|valor|montante)/i;
   const datePattern = /\b\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}\b/;
   const amountPattern = /\d{1,3}(?:[.\s]\d{3})*(?:,\d{2}|\.\d{2})|\d+[,.]\d{2}/;
 
@@ -492,7 +492,7 @@ export default function Home() {
       {
         id: Date.now(),
         supplier: manualInvoiceSupplier.trim(),
-        description: manualInvoiceDescription.trim() || "Sem descriÃ§Ã£o",
+        description: manualInvoiceDescription.trim() || "Sem descrição",
         amount,
         date,
         work: detailWork.name,
@@ -528,7 +528,7 @@ export default function Home() {
         const result = await recognize(file, "por");
         text = result.data.text;
       } else {
-        throw new Error("Este ficheiro nÃ£o Ã© uma imagem nem um PDF.");
+        throw new Error("Este ficheiro não é uma imagem nem um PDF.");
       }
 
       setManualInvoiceSupplier(
@@ -545,7 +545,7 @@ export default function Home() {
       setUseCurrentInvoiceDate(!detectedDate);
       setOcrNotice(
         isPdf
-          ? "PDF lido localmente. Confirma a descriÃ§Ã£o e o valor antes de guardar."
+          ? "PDF lido localmente. Confirma a descrição e o valor antes de guardar."
           : "Dados lidos localmente. Confirma ou corrige os campos antes de guardar.",
       );
     } catch (error) {
@@ -553,7 +553,7 @@ export default function Home() {
       setOcrNotice(
         error instanceof Error
           ? error.message
-          : "NÃ£o foi possÃ­vel ler a fatura. Preenche os campos manualmente.",
+          : "Não foi possível ler a fatura. Preenche os campos manualmente.",
       );
     } finally {
       setIsUploadingInvoice(false);
@@ -571,7 +571,7 @@ export default function Home() {
             <Image
               className="company-logo company-logo-small"
               src="/dimoprop-logo.svg"
-              alt="Dimoprop ConstruÃ§Ãµes e RemodelaÃ§Ãµes"
+              alt="Dimoprop Construções e Remodelações"
               width={720}
               height={270}
               priority
@@ -591,16 +591,16 @@ export default function Home() {
               isSidebarOpen ? "Fechar barra lateral" : "Abrir barra lateral"
             }
           >
-            â˜°
+            ☰
           </button>
         </div>
-        <div className="sidebar-label">Ãrea de trabalho</div>
-        <nav className="sidebar-nav" aria-label="NavegaÃ§Ã£o principal">
+        <div className="sidebar-label">Área de trabalho</div>
+        <nav className="sidebar-nav" aria-label="Navegação principal">
           <a className="nav-item nav-item-active" href="#resumo">
-            <span>â–¦</span> Resumo
+            <span>▦</span> Resumo
           </a>
           <a className="nav-item" href="#obras">
-            <span>âŒ‚</span> Obras <b>{visibleWorks.length}</b>
+            <span>⌂</span> Obras <b>{visibleWorks.length}</b>
           </a>
         </nav>
         <div className="sidebar-bottom">
@@ -613,8 +613,8 @@ export default function Home() {
         <header className="dashboard-header">
           <div className="dashboard-heading">
             <div>
-              <p className="eyebrow">TerÃ§a-feira, 18 de agosto de 2026</p>
-              <h1 className="display-font dashboard-title">OlÃ¡, Dino.</h1>
+              <p className="eyebrow">Terça-feira, 18 de agosto de 2026</p>
+              <h1 className="display-font dashboard-title">Olá, Dino.</h1>
             </div>
           </div>
           <div className="header-actions">
@@ -629,11 +629,11 @@ export default function Home() {
               className="profile-chip profile-button"
               type="button"
               onClick={handleLogout}
-              title="Terminar sessÃ£o"
+              title="Terminar sessão"
             >
               <span className="profile-avatar">DM</span>
               <span className="hidden sm:block">Dino Mota</span>
-              <span aria-hidden="true">â†ª</span>
+              <span aria-hidden="true">↪</span>
             </button>
           </div>
         </header>
@@ -667,7 +667,7 @@ export default function Home() {
                 + Adicionar obra
               </button>
               <button className="text-button">
-                Ver todas <span>â†’</span>
+                Ver todas <span>→</span>
               </button>
             </div>
           </div>
@@ -689,7 +689,7 @@ export default function Home() {
                 >
                   <div className={`work-color work-color-${work.color}`}>
                     <span>{work.code}</span>
-                    <span>â†—</span>
+                    <span>↗</span>
                   </div>
                   <div className="work-card-body">
                     <div className="flex items-start justify-between gap-3">
@@ -704,13 +704,13 @@ export default function Home() {
                     </div>
                     <div className="work-finance">
                       <div>
-                        <span>OrÃ§amento</span>
+                        <span>Orçamento</span>
                         <strong>{money.format(work.budget)}</strong>
                       </div>
                       <div>
                         <span>Extras</span>
                         <strong className={work.extras ? "extra-value" : ""}>
-                          {work.extras ? `+ ${money.format(work.extras)}` : "â€”"}
+                          {work.extras ? `+ ${money.format(work.extras)}` : "—"}
                         </strong>
                       </div>
                       <div>
@@ -759,7 +759,7 @@ export default function Home() {
                   onClick={() => setIsClientModalOpen(false)}
                   aria-label="Fechar"
                 >
-                  Ã—
+                  ×
                 </button>
               </div>
               <form className="client-form" onSubmit={handleCreateClient}>
@@ -837,7 +837,7 @@ export default function Home() {
                   onClick={() => setIsWorkModalOpen(false)}
                   aria-label="Fechar"
                 >
-                  Ã—
+                  ×
                 </button>
               </div>
               <form className="client-form" onSubmit={handleCreateWork}>
@@ -868,7 +868,7 @@ export default function Home() {
                   </select>
                 </label>
                 <label htmlFor="work-budget">
-                  OrÃ§amento total
+                  Orçamento total
                   <input
                     id="work-budget"
                     type="number"
@@ -881,7 +881,7 @@ export default function Home() {
                   />
                 </label>
                 <label htmlFor="work-received">
-                  JÃ¡ recebido
+                  Já recebido
                   <input
                     id="work-received"
                     type="number"
@@ -901,7 +901,7 @@ export default function Home() {
                     Cancelar
                   </button>
                   <button className="auth-submit" type="submit">
-                    Guardar obra <span>â†’</span>
+                    Guardar obra <span>→</span>
                   </button>
                 </div>
               </form>
@@ -944,7 +944,7 @@ export default function Home() {
                         onClick={() => setShowProfit((visible) => !visible)}
                         aria-label={showProfit ? "Esconder lucro" : "Mostrar lucro"}
                       >
-                        {showProfit ? "â—‰" : "â—Œ"}
+                        {showProfit ? "◉" : "◌"}
                       </button>
                     </span>
                     <strong>
@@ -956,7 +956,7 @@ export default function Home() {
                                 .filter((invoice) => invoice.type !== "extra")
                                 .reduce((total, invoice) => total + invoice.amount, 0),
                           )
-                        : "â€¢â€¢â€¢â€¢"}
+                        : "••••"}
                     </strong>
                   </div>
                   <button
@@ -965,13 +965,13 @@ export default function Home() {
                     onClick={() => setSelectedWorkDetail(null)}
                     aria-label="Fechar"
                   >
-                    Ã—
+                    ×
                   </button>
                 </div>
               </header>
               <div className="work-detail-finance">
                 <div>
-                  <span>OrÃ§amento</span>
+                  <span>Orçamento</span>
                   <strong>{money.format(detailWork.budget)}</strong>
                 </div>
                 <div>
@@ -985,7 +985,7 @@ export default function Home() {
                   </strong>
                 </div>
                 <div>
-                  <span>MÃ£o de obra</span>
+                  <span>Mão de obra</span>
                   <strong>
                     {money.format(
                       detailInvoices
@@ -1015,16 +1015,16 @@ export default function Home() {
                     aria-expanded={Boolean(expandedWorkPayments[detailWork.name])}
                     aria-label={`Adicionar pagamento a ${detailWork.name}`}
                   >
-                    {expandedWorkPayments[detailWork.name] ? "âˆ’" : "+"}
+                    {expandedWorkPayments[detailWork.name] ? "−" : "+"}
                   </button>
                   {expandedWorkPayments[detailWork.name] && (
                     <div className="work-payment-history">
-                      <strong>HistÃ³rico de pagamentos</strong>
+                      <strong>Histórico de pagamentos</strong>
                       {detailWork.receivedPayments.length ? (
                         <div className="payment-history-list">
                           {detailWork.receivedPayments.map((payment) => (
                             <span key={payment.id}>
-                              {payment.date} Â· {money.format(payment.amount)}
+                              {payment.date} · {money.format(payment.amount)}
                             </span>
                           ))}
                         </div>
@@ -1081,7 +1081,7 @@ export default function Home() {
                     type="button"
                     onClick={() => setWorkDetailTab("labor")}
                   >
-                    MÃ£o de obra
+                    Mão de obra
                     <b>
                       {
                         detailInvoices.filter(
@@ -1094,8 +1094,8 @@ export default function Home() {
                     className="tab-add-invoice"
                     type="button"
                     onClick={() => openInvoiceEntry("labor")}
-                    title="Adicionar mÃ£o de obra"
-                    aria-label="Adicionar mÃ£o de obra"
+                    title="Adicionar mão de obra"
+                    aria-label="Adicionar mão de obra"
                   >
                     +
                   </button>
@@ -1140,7 +1140,7 @@ export default function Home() {
                       </strong>
                     </div>
                     <div>
-                      <span>JÃ¡ pago</span>
+                      <span>Já pago</span>
                       <strong className="extra-paid">
                         {money.format(
                           detailInvoices
@@ -1188,15 +1188,15 @@ export default function Home() {
                                 }))
                               }
                               aria-expanded={Boolean(expandedPaymentHistory[invoice.id])}
-                              aria-label={`Ver histÃ³rico de pagamentos de ${invoice.supplier}`}
+                              aria-label={`Ver histórico de pagamentos de ${invoice.supplier}`}
                             >
-                              {expandedPaymentHistory[invoice.id] ? "âŒ„" : "â€º"}
+                              {expandedPaymentHistory[invoice.id] ? "⌄" : "›"}
                             </button>
                           )}
                           <strong>{invoice.supplier}</strong>
                         </div>
                         <span>
-                          {invoice.description} Â· {invoice.date}
+                          {invoice.description} · {invoice.date}
                         </span>
                       </div>
                       <div className="detail-invoice-value">
@@ -1210,7 +1210,7 @@ export default function Home() {
                             <strong>{money.format(invoice.amount)}</strong>
                             <span>
                               {invoice.type === "labor"
-                                ? "MÃ£o de obra Â· abatida ao orÃ§amento"
+                                ? "Mão de obra · abatida ao orçamento"
                                 : "Despesa geral"}
                             </span>
                           </>
@@ -1223,16 +1223,16 @@ export default function Home() {
                         aria-label={`Remover fatura ${invoice.supplier}`}
                         title="Remover"
                       >
-                        Ã—
+                        ×
                       </button>
                       {invoice.type === "extra" && expandedPaymentHistory[invoice.id] && (
                         <div className="extra-payment-history">
-                          <strong>HistÃ³rico de pagamentos</strong>
+                          <strong>Histórico de pagamentos</strong>
                           {invoice.payments.length ? (
                             <div className="payment-history-list">
                               {invoice.payments.map((payment) => (
                                 <span key={payment.id}>
-                                  {payment.date} Â· {money.format(payment.amount)}
+                                  {payment.date} · {money.format(payment.amount)}
                                 </span>
                               ))}
                             </div>
@@ -1265,7 +1265,7 @@ export default function Home() {
                     : invoice.type === workDetailTab,
                 ).length === 0 && (
                   <p className="empty-detail">
-                    Ainda nÃ£o existem faturas nesta aba.
+                    Ainda não existem faturas nesta aba.
                   </p>
                 )}
               </div>
@@ -1292,14 +1292,14 @@ export default function Home() {
                     {invoiceEntryType === "extra"
                       ? "novo extra"
                       : invoiceEntryType === "labor"
-                        ? "nova mÃ£o de obra"
+                        ? "nova mão de obra"
                         : "nova fatura"}
                   </p>
                   <h2 id="invoice-entry-title" className="display-font">
                     Adicionar {invoiceEntryType === "extra"
                       ? "extra"
                       : invoiceEntryType === "labor"
-                        ? "mÃ£o de obra"
+                        ? "mão de obra"
                         : "fatura"}
                   </h2>
                 </div>
@@ -1309,15 +1309,15 @@ export default function Home() {
                   onClick={() => setInvoiceEntryType(null)}
                   aria-label="Fechar"
                 >
-                  Ã—
+                  ×
                 </button>
               </div>
               <p className="invoice-entry-intro">
                 Carrega o documento para preencher os dados automaticamente ou insere-os manualmente.
               </p>
               <label className="invoice-upload-option">
-                <span>{isUploadingInvoice ? "A carregarâ€¦" : "Carregar fatura"}</span>
-                <small>Imagem ou PDF â€” a leitura Ã© feita no teu dispositivo</small>
+                <span>{isUploadingInvoice ? "A carregar…" : "Carregar fatura"}</span>
+                <small>Imagem ou PDF — a leitura é feita no teu dispositivo</small>
                 <input
                   type="file"
                   accept="image/*,application/pdf"
@@ -1335,7 +1335,7 @@ export default function Home() {
               <div className="invoice-entry-divider"><span>ou preencher manualmente</span></div>
               <form className="invoice-entry-form" onSubmit={createManualInvoice}>
                 <label>
-                  Fornecedor / tÃ­tulo
+                  Fornecedor / título
                   <input
                     required
                     value={manualInvoiceSupplier}
@@ -1344,7 +1344,7 @@ export default function Home() {
                   />
                 </label>
                 <label>
-                  DescriÃ§Ã£o
+                  Descrição
                   <input
                     value={manualInvoiceDescription}
                     onChange={(event) => setManualInvoiceDescription(event.target.value)}
@@ -1352,7 +1352,7 @@ export default function Home() {
                   />
                 </label>
                 <label>
-                  Valor total (â‚¬)
+                  Valor total (€)
                   <input
                     required
                     type="number"
@@ -1383,7 +1383,7 @@ export default function Home() {
                 </label>
                 {invoiceEntryType === "extra" && (
                   <label>
-                    Valor jÃ¡ pago (â‚¬)
+                    Valor já pago (€)
                     <input
                       type="number"
                       min="0"
@@ -1399,7 +1399,7 @@ export default function Home() {
                   Guardar {invoiceEntryType === "extra"
                     ? "extra"
                     : invoiceEntryType === "labor"
-                      ? "mÃ£o de obra"
+                      ? "mão de obra"
                       : "fatura"}
                 </button>
               </form>

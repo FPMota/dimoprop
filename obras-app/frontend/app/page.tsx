@@ -6,17 +6,18 @@ import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase/client";
 
 type Transaction = {
-  id: number;
+  id: string;
   amount: number;
   date: string;
 };
 
 type Invoice = {
-  id: number;
+  id: string;
   supplier: string;
   description: string;
   amount: number;
   date: string;
+  workId: string;
   work: string;
   status: "Classificada" | "A rever";
   type: "normal" | "extra" | "labor";
@@ -25,6 +26,7 @@ type Invoice = {
 };
 
 type Work = {
+  id: string;
   name: string;
   clientId: string;
   code: string;
@@ -39,65 +41,80 @@ type Work = {
 type Client = {
   id: string;
   name: string;
+  email: string;
+  phone: string;
+  address: string;
 };
-
-type AppState = {
-  workItems: Work[];
-  clientItems: Client[];
-  invoices: Invoice[];
-};
-
-const STORAGE_KEY = "dimoprop.dashboard.state.v1";
-
-const works: Work[] = [
-  {
-    name: "EXEMPLO",
-    clientId: "client-exemplo",
-    code: "OB-001",
-    progress: 0,
-    budget: 25000,
-    extras: 0,
-    received: 0,
-    receivedPayments: [],
-    color: "blue",
-  },
-];
-
-const initialClients: Client[] = [
-  { id: "client-exemplo", name: "EXEMPLO" },
-];
-
-const initialInvoices: Invoice[] = [];
 
 const money = new Intl.NumberFormat("pt-PT", {
   style: "currency",
   currency: "EUR",
 });
 
-function getFallbackState(): AppState {
-  return {
-    workItems: works,
-    clientItems: initialClients,
-    invoices: initialInvoices,
-  };
+type ClientRow = {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+};
+
+type WorkRow = {
+  id: string;
+  name: string;
+  code: string;
+  budget: number | string | null;
+  progress: number | null;
+  status: string | null;
+  client_id: string | null;
+};
+
+type InvoiceRow = {
+  id: string;
+  supplier: string | null;
+  description: string | null;
+  invoice_date: string | null;
+  amount: number | string | null;
+  status: string | null;
+  type: "normal" | "extra" | "labor";
+  work_id: string | null;
+  file_path: string | null;
+};
+
+type InvoicePaymentRow = {
+  id: string;
+  invoice_id: string;
+  amount: number | string | null;
+  payment_date: string | null;
+};
+
+type WorkPaymentRow = {
+  id: string;
+  work_id: string;
+  amount: number | string | null;
+  payment_date: string | null;
+  description: string | null;
+};
+
+const workColors = ["blue", "lime", "terracotta"] as const;
+
+function toNumber(value: number | string | null | undefined) {
+  return Number(value ?? 0) || 0;
 }
 
-function loadDashboardState(): AppState {
-  if (typeof window === "undefined") return getFallbackState();
+function formatDate(dateValue: string | null | undefined) {
+  if (!dateValue) return "—";
+  const date = new Date(`${dateValue}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return dateValue;
+  return date.toLocaleDateString("pt-PT", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
 
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return getFallbackState();
-
-    const parsed = JSON.parse(raw) as Partial<AppState>;
-    return {
-      workItems: Array.isArray(parsed.workItems) ? parsed.workItems : works,
-      clientItems: Array.isArray(parsed.clientItems) ? parsed.clientItems : initialClients,
-      invoices: Array.isArray(parsed.invoices) ? parsed.invoices : initialInvoices,
-    };
-  } catch {
-    return getFallbackState();
-  }
+function toIsoDate(value = new Date()) {
+  return value.toISOString().slice(0, 10);
 }
 
 function extractAmount(text: string) {
@@ -178,6 +195,138 @@ function extractSupplier(text: string, fallback: string) {
     if (candidate) return candidate;
   }
   return fallback;
+}
+
+async function getOwnerId() {
+  const { data, error } = await supabase.auth.getUser();
+  if (error) throw error;
+  if (!data.user) throw new Error("Utilizador não autenticado.");
+  return data.user.id;
+}
+
+function buildDisplayDate(value: string | null | undefined) {
+  return formatDate(value);
+}
+
+function buildWorkColor(index: number) {
+  return workColors[index % workColors.length];
+}
+
+function getPaymentTotal(payments: Transaction[]) {
+  return payments.reduce((total, payment) => total + payment.amount, 0);
+}
+
+async function loadDashboardDataFromDb() {
+  const [clientsResult, worksResult, invoicesResult, invoicePaymentsResult, workPaymentsResult] =
+    await Promise.all([
+      supabase
+        .from("clients")
+        .select("id,name,email,phone,address,created_at")
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("works")
+        .select("id,name,code,budget,progress,status,client_id,created_at")
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("invoices")
+        .select("id,supplier,description,invoice_date,amount,status,type,work_id,file_path,created_at")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("invoice_payments")
+        .select("id,invoice_id,amount,payment_date,created_at")
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("work_payments")
+        .select("id,work_id,amount,payment_date,description,created_at")
+        .order("created_at", { ascending: true }),
+    ]);
+
+  const firstError =
+    clientsResult.error ??
+    worksResult.error ??
+    invoicesResult.error ??
+    invoicePaymentsResult.error ??
+    workPaymentsResult.error;
+  if (firstError) throw firstError;
+
+  const clientRows = (clientsResult.data ?? []) as ClientRow[];
+  const workRows = (worksResult.data ?? []) as WorkRow[];
+  const invoiceRows = (invoicesResult.data ?? []) as InvoiceRow[];
+  const invoicePaymentRows = (invoicePaymentsResult.data ?? []) as InvoicePaymentRow[];
+  const workPaymentRows = (workPaymentsResult.data ?? []) as WorkPaymentRow[];
+
+  const clients = clientRows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    email: row.email ?? "",
+    phone: row.phone ?? "",
+    address: row.address ?? "",
+  }));
+
+  const paymentsByInvoiceId = new Map<string, InvoicePaymentRow[]>();
+  for (const payment of invoicePaymentRows) {
+    const list = paymentsByInvoiceId.get(payment.invoice_id) ?? [];
+    list.push(payment);
+    paymentsByInvoiceId.set(payment.invoice_id, list);
+  }
+
+  const workPaymentsByWorkId = new Map<string, WorkPaymentRow[]>();
+  for (const payment of workPaymentRows) {
+    const list = workPaymentsByWorkId.get(payment.work_id) ?? [];
+    list.push(payment);
+    workPaymentsByWorkId.set(payment.work_id, list);
+  }
+
+  const workLookup = new Map<string, WorkRow>();
+  workRows.forEach((row) => workLookup.set(row.id, row));
+
+  const invoices = invoiceRows.map((row) => {
+    const payments = (paymentsByInvoiceId.get(row.id) ?? []).map((payment) => ({
+      id: payment.id,
+      amount: toNumber(payment.amount),
+      date: buildDisplayDate(payment.payment_date),
+    }));
+    const work = row.work_id ? workLookup.get(row.work_id)?.name ?? "" : "";
+    return {
+      id: row.id,
+      supplier: row.supplier ?? "",
+      description: row.description ?? "",
+      amount: toNumber(row.amount),
+      date: buildDisplayDate(row.invoice_date),
+      workId: row.work_id ?? "",
+      work,
+      status: row.status === "Classificada" ? "Classificada" : "A rever",
+      type: row.type,
+      paid: getPaymentTotal(payments),
+      payments,
+    } satisfies Invoice;
+  });
+
+  const workItems = workRows.map((row, index) => {
+    const workInvoices = invoices.filter((invoice) => invoice.workId === row.id);
+    const receivedPayments = (workPaymentsByWorkId.get(row.id) ?? []).map((payment) => ({
+      id: payment.id,
+      amount: toNumber(payment.amount),
+      date: buildDisplayDate(payment.payment_date),
+    }));
+
+    return {
+      id: row.id,
+      name: row.name,
+      clientId: row.client_id ?? "",
+      code: row.code,
+      progress: Number(row.progress ?? 0) || 0,
+      budget: toNumber(row.budget),
+      extras: workInvoices
+        .filter((invoice) => invoice.type === "extra")
+        .reduce((total, invoice) => total + invoice.amount, 0),
+      received: receivedPayments.reduce((total, payment) => total + payment.amount, 0),
+      receivedPayments,
+      color: buildWorkColor(index),
+    } satisfies Work;
+  });
+
+  return { workItems, clientItems: clients, invoices };
 }
 
 function decodePdfLiteralString(source: string) {
@@ -298,11 +447,12 @@ async function extractPdfTextFromFile(file: File) {
 export default function Home() {
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [workItems, setWorkItems] = useState(works);
-  const [clientItems, setClientItems] = useState(initialClients);
+  const [workItems, setWorkItems] = useState<Work[]>([]);
+  const [clientItems, setClientItems] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState("Todos os clientes");
-  const [invoices, setInvoices] = useState(initialInvoices);
-  const [hasHydratedState, setHasHydratedState] = useState(false);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [dataError, setDataError] = useState("");
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
   const [newClientName, setNewClientName] = useState("");
   const [newClientEmail, setNewClientEmail] = useState("");
@@ -318,14 +468,14 @@ export default function Home() {
   const [workDetailTab, setWorkDetailTab] = useState<Invoice["type"]>("normal");
   const [showProfit, setShowProfit] = useState(false);
   const [isUploadingInvoice, setIsUploadingInvoice] = useState(false);
-  const [paymentAmounts, setPaymentAmounts] = useState<Record<number, string>>(
+  const [paymentAmounts, setPaymentAmounts] = useState<Record<string, string>>(
     {},
   );
   const [workPaymentAmounts, setWorkPaymentAmounts] = useState<
     Record<string, string>
   >({});
   const [expandedPaymentHistory, setExpandedPaymentHistory] = useState<
-    Record<number, boolean>
+    Record<string, boolean>
   >({});
   const [expandedWorkPayments, setExpandedWorkPayments] = useState<
     Record<string, boolean>
@@ -342,24 +492,28 @@ export default function Home() {
   const [ocrNotice, setOcrNotice] = useState("");
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      const stored = loadDashboardState();
-      setWorkItems(stored.workItems);
-      setClientItems(stored.clientItems);
-      setInvoices(stored.invoices);
-      setHasHydratedState(true);
-    }, 0);
+    let active = true;
 
-    return () => window.clearTimeout(timer);
+    (async () => {
+      try {
+        const loaded = await loadDashboardDataFromDb();
+        if (!active) return;
+        setWorkItems(loaded.workItems);
+        setClientItems(loaded.clientItems);
+        setInvoices(loaded.invoices);
+        setDataError("");
+      } catch {
+        if (!active) return;
+        setDataError("Não foi possível carregar os dados da base de dados.");
+      } finally {
+        if (active) setIsLoadingData(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
   }, []);
-
-  useEffect(() => {
-    if (!hasHydratedState || typeof window === "undefined") return;
-    window.localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ workItems, clientItems, invoices }),
-    );
-  }, [hasHydratedState, workItems, clientItems, invoices]);
 
   const visibleWorks = workItems.filter(
     (work) =>
@@ -369,7 +523,7 @@ export default function Home() {
   const detailWork = workItems.find((work) => work.name === selectedWorkDetail);
   const detailInvoices = detailWork
     ? invoices
-        .filter((invoice) => invoice.work === detailWork.name)
+        .filter((invoice) => invoice.workId === detailWork.id)
         .sort((first, second) => second.date.localeCompare(first.date))
     : [];
 
@@ -379,15 +533,11 @@ export default function Home() {
       .reduce((total, invoice) => total + invoice.amount, 0);
   }
 
-  function updateWorkExtras(workName: string, delta: number) {
-    if (!delta) return;
-    setWorkItems((current) =>
-      current.map((work) =>
-        work.name === workName
-          ? { ...work, extras: Math.max(0, work.extras + delta) }
-          : work,
-      ),
-    );
+  async function reloadDashboardData() {
+    const loaded = await loadDashboardDataFromDb();
+    setWorkItems(loaded.workItems);
+    setClientItems(loaded.clientItems);
+    setInvoices(loaded.invoices);
   }
 
   async function handleLogout() {
@@ -395,146 +545,134 @@ export default function Home() {
     router.replace("/login");
   }
 
-  function handleCreateClient(event: FormEvent<HTMLFormElement>) {
+  async function handleCreateClient(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const clientName = newClientName.trim();
     if (!clientName) return;
-    const clientId = `client-local-${Date.now()}`;
-    setClientItems((current) => [
-      ...current,
-      { id: clientId, name: clientName },
-    ]);
-    setSelectedClient(clientId);
+    const ownerId = await getOwnerId();
+    const { data, error } = await supabase
+      .from("clients")
+      .insert({
+        owner_id: ownerId,
+        name: clientName,
+        email: newClientEmail.trim() || null,
+        phone: newClientPhone.trim() || null,
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    setSelectedClient(data.id);
     setNewClientName("");
     setNewClientEmail("");
     setNewClientPhone("");
     setIsClientModalOpen(false);
+    await reloadDashboardData();
   }
 
-  function handleCreateWork(event: FormEvent<HTMLFormElement>) {
+  async function handleCreateWork(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const clientId = newWorkClient || `client-local-${Date.now()}`;
+    const ownerId = await getOwnerId();
+    const clientId = newWorkClient || null;
     const budget = Number(newWorkBudget) || 0;
     const received = Math.max(0, Math.min(Number(newWorkReceived) || 0, budget));
-    const newWork = {
-      name: newWorkName,
-      clientId,
-      code: `OB-${String(workItems.length + 25).padStart(3, "0")}`,
-      progress: 0,
-      budget,
-      extras: 0,
-      received,
-      receivedPayments:
-        received > 0
-          ? [
-              {
-                id: Date.now(),
-                amount: received,
-                date: new Date().toLocaleDateString("pt-PT", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                }),
-              },
-            ]
-          : [],
-      color: "blue",
-    };
-    setWorkItems((current) => [...current, newWork]);
-    if (!clientItems.some((client) => client.id === clientId))
-      setClientItems((current) => [
-        ...current,
-        { id: clientId, name: "Novo cliente" },
-      ]);
-    setSelectedClient(clientId);
+    const code = `OB-${String(workItems.length + 1).padStart(3, "0")}`;
+    const { data, error } = await supabase
+      .from("works")
+      .insert({
+        owner_id: ownerId,
+        name: newWorkName.trim(),
+        code,
+        budget,
+        progress: 0,
+        status: "Em curso",
+        client_id: clientId,
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+
+    if (received > 0) {
+      const payment = await supabase.from("work_payments").insert({
+        owner_id: ownerId,
+        work_id: data.id,
+        amount: received,
+        payment_date: toIsoDate(),
+        description: "Pagamento inicial",
+      });
+      if (payment.error) throw payment.error;
+    }
+
+    setSelectedClient(clientId ?? "Todos os clientes");
     setNewWorkName("");
     setNewWorkClient("");
     setNewWorkBudget("");
     setNewWorkReceived("");
     setIsWorkModalOpen(false);
+    await reloadDashboardData();
   }
 
-  function updateExtraPayment(invoiceId: number, value: string) {
+  function updateExtraPayment(invoiceId: string, value: string) {
     setPaymentAmounts((current) => ({ ...current, [invoiceId]: value }));
   }
 
-  function registerExtraPayment(invoiceId: number) {
+  async function registerExtraPayment(invoiceId: string) {
     const amount = Math.max(0, Number(paymentAmounts[invoiceId]) || 0);
     if (!amount) return;
-    setInvoices((current) =>
-      current.map((invoice) => {
-        if (invoice.id !== invoiceId) return invoice;
-        const remaining = Math.max(0, invoice.amount - invoice.paid);
-        const payment = Math.min(amount, remaining);
-        return {
-          ...invoice,
-          paid: invoice.paid + payment,
-          payments: [
-            ...invoice.payments,
-            {
-              id: Date.now(),
-              amount: payment,
-              date: new Date().toLocaleDateString("pt-PT", {
-                day: "2-digit",
-                month: "short",
-              }),
-            },
-          ],
-        };
-      }),
-    );
+    const ownerId = await getOwnerId();
+    const invoice = invoices.find((entry) => entry.id === invoiceId);
+    if (!invoice) return;
+    const remaining = Math.max(0, invoice.amount - invoice.paid);
+    const payment = Math.min(amount, remaining);
+    if (!payment) return;
+
+    const { error } = await supabase.from("invoice_payments").insert({
+      owner_id: ownerId,
+      invoice_id: invoiceId,
+      amount: payment,
+      payment_date: toIsoDate(),
+    });
+    if (error) throw error;
+
     setPaymentAmounts((current) => ({ ...current, [invoiceId]: "" }));
+    await reloadDashboardData();
   }
 
   function updateWorkPayment(workName: string, value: string) {
     setWorkPaymentAmounts((current) => ({ ...current, [workName]: value }));
   }
 
-  function registerWorkPayment(workName: string) {
+  async function registerWorkPayment(workName: string) {
     const amount = Math.max(0, Number(workPaymentAmounts[workName]) || 0);
     if (!amount) return;
+    const ownerId = await getOwnerId();
+    const work = workItems.find((entry) => entry.name === workName);
+    if (!work) return;
+    const remaining = Math.max(0, work.budget - work.received);
+    const payment = Math.min(amount, remaining);
+    if (!payment) return;
 
-    setWorkItems((current) =>
-      current.map((work) => {
-        if (work.name !== workName) return work;
-        const remaining = Math.max(0, work.budget - work.received);
-        const payment = Math.min(amount, remaining);
-        if (!payment) return work;
-        return {
-          ...work,
-          received: work.received + payment,
-          receivedPayments: [
-            ...work.receivedPayments,
-            {
-              id: Date.now(),
-              amount: payment,
-              date: new Date().toLocaleDateString("pt-PT", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-              }),
-            },
-          ],
-        };
-      }),
-    );
+    const { error } = await supabase.from("work_payments").insert({
+      owner_id: ownerId,
+      work_id: work.id,
+      amount: payment,
+      payment_date: toIsoDate(),
+      description: "Pagamento registado",
+    });
+    if (error) throw error;
+
     setWorkPaymentAmounts((current) => ({ ...current, [workName]: "" }));
+    await reloadDashboardData();
   }
 
-  function removeInvoice(invoiceId: number) {
-    let removedInvoice: Invoice | undefined;
-    setInvoices((current) => {
-      removedInvoice = current.find((invoice) => invoice.id === invoiceId);
-      return current.filter((invoice) => invoice.id !== invoiceId);
-    });
-    if (removedInvoice?.type === "extra") {
-      updateWorkExtras(removedInvoice.work, -removedInvoice.amount);
-    }
+  async function removeInvoice(invoiceId: string) {
+    const { error } = await supabase.from("invoices").delete().eq("id", invoiceId);
+    if (error) throw error;
     setExpandedPaymentHistory((current) => {
       const remaining = { ...current };
       delete remaining[invoiceId];
       return remaining;
     });
+    await reloadDashboardData();
   }
 
   function openInvoiceEntry(type: Invoice["type"]) {
@@ -548,44 +686,48 @@ export default function Home() {
     setOcrNotice("");
   }
 
-  function createManualInvoice(event: FormEvent<HTMLFormElement>) {
+  async function createManualInvoice(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!detailWork || !invoiceEntryType || !manualInvoiceSupplier.trim()) return;
 
+    const ownerId = await getOwnerId();
     const amount = Math.max(0, Number(manualInvoiceAmount) || 0);
     const paid =
       invoiceEntryType === "extra"
         ? Math.min(amount, Math.max(0, Number(manualExtraPaid) || 0))
         : 0;
     const invoiceDate = useCurrentInvoiceDate
-      ? new Date().toISOString().slice(0, 10)
+      ? toIsoDate()
       : manualInvoiceDate;
-    const date = new Date(`${invoiceDate}T12:00:00`).toLocaleDateString("pt-PT", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
 
-    setInvoices((current) => [
-      {
-        id: Date.now(),
+    const { data, error } = await supabase
+      .from("invoices")
+      .insert({
+        owner_id: ownerId,
+        work_id: detailWork.id,
         supplier: manualInvoiceSupplier.trim(),
         description: manualInvoiceDescription.trim() || "Sem descrição",
         amount,
-        date,
-        work: detailWork.name,
+        invoice_date: invoiceDate,
         status: "Classificada",
         type: invoiceEntryType,
-        paid,
-        payments:
-          paid > 0 ? [{ id: Date.now() + 1, amount: paid, date }] : [],
-      },
-      ...current,
-    ]);
-    if (invoiceEntryType === "extra" && amount > 0) {
-      updateWorkExtras(detailWork.name, amount);
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+
+    if (paid > 0) {
+      const payment = await supabase.from("invoice_payments").insert({
+        owner_id: ownerId,
+        invoice_id: data.id,
+        amount: paid,
+        payment_date: invoiceDate,
+      });
+      if (payment.error) throw payment.error;
     }
+
     setInvoiceEntryType(null);
+    await reloadDashboardData();
   }
 
   async function handleInvoiceUpload(
@@ -646,6 +788,16 @@ export default function Home() {
     <main
       className={`dashboard-shell ${isSidebarOpen ? "sidebar-open" : "sidebar-collapsed"}`}
     >
+      {isLoadingData && (
+        <div className="ocr-notice ocr-notice-success" role="status">
+          A carregar dados da base de dados...
+        </div>
+      )}
+      {dataError && (
+        <div className="ocr-notice" role="alert">
+          {dataError}
+        </div>
+      )}
       <aside className="dashboard-sidebar">
         <div className="sidebar-topbar">
           <div className="brand-lockup">
@@ -685,7 +837,7 @@ export default function Home() {
           </a>
         </nav>
         <div className="sidebar-bottom">
-          <span className="status-dot" /> Dados locais{" "}
+          <span className="status-dot" /> Dados na base de dados{" "}
           <span className="text-xs text-[var(--muted)]">v0.1</span>
         </div>
       </aside>

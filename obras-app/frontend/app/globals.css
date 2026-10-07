@@ -73,9 +73,9 @@ body {
   width: 2.75rem;
 }
 
-.company-logo { display: block; height: auto; max-width: 15rem; object-fit: contain; width: 100%; }
-.company-logo-small { height: auto; max-width: 12rem; width: 12rem; }
-.dashboard-sidebar .company-logo-small { max-width: 12.5rem; width: 12.5rem; }
+.company-name { display: block; height: auto; max-width: 15rem; object-fit: contain; width: 100%; }
+.company-name-small { height: auto; max-width: 12rem; width: 12rem; }
+.dashboard-sidebar .company-name-small { max-width: 12.5rem; width: 12.5rem; }
 
 .hero-card {
   background: var(--ink);
@@ -146,7 +146,7 @@ body {
 .work-card:nth-child(2) { animation-delay: 80ms; }.work-card:nth-child(3) { animation-delay: 140ms; }
 .sidebar-collapsed .sidebar-topbar { align-items: center; flex-direction: column; gap: 1rem; }
 .sidebar-collapsed .brand-lockup { justify-content: center; padding-left: 0; padding-right: 0; }
-.sidebar-collapsed .company-logo-small { display: none; }
+.sidebar-collapsed .company-name-small { display: none; }
 .sidebar-collapsed .sidebar-logo-compact { display: inline-flex; }
 .sidebar-collapsed .sidebar-toggle { order: 0; }
 .work-card { animation: dashboard-in 500ms cubic-bezier(.22, 1, .36, 1) both; }
@@ -167,7 +167,7 @@ body {
 
 .sidebar-collapsed .dashboard-sidebar { width: 4.75rem; }
 .sidebar-collapsed .brand-lockup { justify-content: center; padding-left: 0; padding-right: 0; }
-.sidebar-collapsed .company-logo-small { max-width: 3.2rem; width: 3.2rem; }
+.sidebar-collapsed .company-name-small { max-width: 3.2rem; width: 3.2rem; }
 .sidebar-collapsed .sidebar-label { display: none; }
 .sidebar-collapsed .nav-item { font-size: 0; justify-content: center; padding-left: .5rem; padding-right: .5rem; }
 .sidebar-collapsed .nav-item span { font-size: 1.15rem; }
@@ -301,15 +301,15 @@ body {
 .new-client-button { background: var(--orange); border: 1px solid var(--ink); border-radius: 99px; color: var(--ink); cursor: pointer; font-size: .75rem; font-weight: 800; padding: .7rem .9rem; white-space: nowrap; }.new-client-button:hover { background: var(--lime); }
 .client-modal-backdrop { align-items: center; background: rgba(23,34,30,.5); display: flex; inset: 0; justify-content: center; padding: 1.5rem; position: fixed; z-index: 20; }.client-modal { background: var(--paper); border: 1px solid var(--ink); border-radius: 1rem; box-shadow: 0 1rem 3rem rgba(23,34,30,.2); max-width: 30rem; padding: 1.5rem; width: 100%; }.modal-heading { align-items: flex-start; display: flex; justify-content: space-between; }.modal-heading h2 { font-size: 2.2rem; letter-spacing: -.07em; margin-top: .35rem; }.modal-close { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 1.8rem; line-height: 1; }.client-form { display: grid; gap: 1rem; margin-top: 1.5rem; }.client-form label { display: grid; font-size: .75rem; font-weight: 800; gap: .4rem; }.client-form input { background: var(--surface); border: 1px solid var(--line); border-radius: .55rem; color: var(--ink); font: inherit; outline: none; padding: .8rem .9rem; }.client-form input:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(214,238,85,.7); }.modal-actions { align-items: center; display: flex; justify-content: flex-end; gap: 1rem; margin-top: .5rem; }.modal-actions .auth-submit { margin-top: 0; }
 .auth-loading { align-items: center; background: var(--paper); display: flex; flex-direction: column; gap: 1rem; justify-content: center; min-height: 100svh; }.auth-loading p { color: var(--muted); font-size: .8rem; font-weight: 700; }
-.auth-shell { align-items: center; background-color: #263b48; background-image: linear-gradient(rgba(22,39,51,.43), rgba(22,39,51,.58)), url("/dimoprop-house.jpg"); background-position: center; background-size: cover; display: flex; height: 100svh; justify-content: center; min-height: 100svh; overflow: hidden; padding: 2rem; position: relative; }
+.auth-shell { align-items: center; background-color: #263b48; background-image: linear-gradient(135deg, #263b48, #527b42); background-position: center; background-size: cover; display: flex; height: 100svh; justify-content: center; min-height: 100svh; overflow: hidden; padding: 2rem; position: relative; }
 .auth-card { background: rgba(243,248,248,.96); border: 1px solid rgba(255,255,255,.7); border-radius: 1.25rem; box-shadow: 0 1.5rem 4rem rgba(8,24,34,.28); max-width: 34rem; padding: clamp(2.25rem, 5vw, 4rem); position: relative; width: 100%; z-index: 1; }
-.auth-brand { align-items: center; display: flex; gap: .75rem; justify-content: center; margin-bottom: 3rem; }.auth-brand .company-logo { max-width: 17rem; }.auth-heading { text-align: center; }.auth-heading h1 { font-size: clamp(2.5rem, 5vw, 4.5rem); letter-spacing: -.08em; line-height: .9; margin: .7rem 0 1rem; }.auth-heading > p:last-child { color: var(--muted); font-size: .95rem; line-height: 1.5; }
+.auth-brand { align-items: center; display: flex; gap: .75rem; justify-content: center; margin-bottom: 3rem; }.auth-brand .company-name { max-width: 17rem; }.auth-heading { text-align: center; }.auth-heading h1 { font-size: clamp(2.5rem, 5vw, 4.5rem); letter-spacing: -.08em; line-height: .9; margin: .7rem 0 1rem; }.auth-heading > p:last-child { color: var(--muted); font-size: .95rem; line-height: 1.5; }
 .auth-form { display: grid; gap: 1.25rem; margin-top: 2.75rem; }.auth-form label { color: var(--ink); display: grid; font-size: .85rem; font-weight: 800; gap: .55rem; }.auth-form input { background: var(--surface); border: 1px solid var(--line); border-radius: .75rem; color: var(--ink); font: inherit; font-size: 1rem; font-weight: 500; min-height: 3.6rem; outline: none; padding: 1rem 1.15rem; }.auth-form input:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(207,231,162,.8); }.auth-error { background: #f2c5bd; border-radius: .5rem; color: #8e443c; font-size: .8rem; padding: .8rem .9rem; }.auth-submit { align-items: center; background: var(--ink); border: 0; border-radius: .75rem; color: var(--paper); cursor: pointer; display: flex; font: inherit; font-size: 1rem; font-weight: 800; justify-content: space-between; margin-top: .5rem; min-height: 3.75rem; padding: 1rem 1.35rem; }.auth-submit:disabled { cursor: wait; opacity: .6; }.auth-submit span { color: var(--lime); font-size: 1.35rem; }.auth-note { color: var(--muted); font-size: .75rem; margin-top: 1.5rem; text-align: center; }
 .auth-aside { background: var(--ink); color: var(--paper); display: flex; flex-direction: column; justify-content: space-between; padding: 3rem clamp(2rem, 6vw, 6rem); }.auth-aside-code, .auth-aside-footer { color: var(--sage); font-size: .68rem; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }.auth-dino { font-size: clamp(7rem, 15vw, 13rem); line-height: 1; margin-bottom: 2rem; }.auth-aside p { font-size: clamp(2.5rem, 5vw, 5rem); letter-spacing: -.08em; line-height: .9; }.auth-aside p span { color: var(--lime); }
 
 @media (max-width: 800px) {
   .dashboard-sidebar { border-bottom: 1px solid var(--line); border-right: 0; padding: 1rem 1.25rem; width: 100%; }
-  .dashboard-shell { display: block; }.dashboard-sidebar, .sidebar-collapsed .dashboard-sidebar { width: 100%; }.sidebar-topbar, .sidebar-collapsed .sidebar-topbar { align-items: flex-start; flex-direction: column; gap: 1rem; }.brand-lockup, .sidebar-collapsed .brand-lockup { justify-content: flex-start; padding: 0 0 1rem; }.sidebar-collapsed .company-logo-small { display: block; max-width: 12.5rem; width: 12.5rem; }.sidebar-collapsed .sidebar-logo-compact { display: none; }.sidebar-label, .sidebar-collapsed .sidebar-label { display: none; }.sidebar-nav, .sidebar-collapsed .sidebar-nav { display: flex; gap: .25rem; }.nav-item, .sidebar-collapsed .nav-item { font-size: .9rem; justify-content: flex-start; padding: .5rem .65rem; }.sidebar-collapsed .nav-item span { font-size: 1.15rem; }.sidebar-collapsed .nav-item b { display: block; }.sidebar-bottom, .sidebar-collapsed .sidebar-bottom { display: none; }.dashboard-content { padding-top: 1.5rem; }.dashboard-grid, .works-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }.upload-card { grid-column: span 2; }
+  .dashboard-shell { display: block; }.dashboard-sidebar, .sidebar-collapsed .dashboard-sidebar { width: 100%; }.sidebar-topbar, .sidebar-collapsed .sidebar-topbar { align-items: flex-start; flex-direction: column; gap: 1rem; }.brand-lockup, .sidebar-collapsed .brand-lockup { justify-content: flex-start; padding: 0 0 1rem; }.sidebar-collapsed .company-name-small { display: block; max-width: 12.5rem; width: 12.5rem; }.sidebar-collapsed .sidebar-logo-compact { display: none; }.sidebar-label, .sidebar-collapsed .sidebar-label { display: none; }.sidebar-nav, .sidebar-collapsed .sidebar-nav { display: flex; gap: .25rem; }.nav-item, .sidebar-collapsed .nav-item { font-size: .9rem; justify-content: flex-start; padding: .5rem .65rem; }.sidebar-collapsed .nav-item span { font-size: 1.15rem; }.sidebar-collapsed .nav-item b { display: block; }.sidebar-bottom, .sidebar-collapsed .sidebar-bottom { display: none; }.dashboard-content { padding-top: 1.5rem; }.dashboard-grid, .works-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }.upload-card { grid-column: span 2; }
 }
 
 @media (max-width: 560px) {
@@ -345,8 +345,8 @@ body {
   padding: 0 .5rem 1rem;
   width: 100%;
 }
-.dashboard-sidebar .company-logo-small,
-.sidebar-collapsed .dashboard-sidebar .company-logo-small {
+.dashboard-sidebar .company-name-small,
+.sidebar-collapsed .dashboard-sidebar .company-name-small {
   display: block;
   height: auto;
   max-width: 12.5rem;
@@ -387,7 +387,7 @@ body {
 .sidebar-collapsed .dashboard-sidebar { width: 5.5rem; }
 .sidebar-collapsed .sidebar-topbar { align-items: center; }
 .sidebar-collapsed .brand-lockup { justify-content: center; padding-left: 0; padding-right: 0; }
-.sidebar-collapsed .dashboard-sidebar .company-logo-small { display: none; }
+.sidebar-collapsed .dashboard-sidebar .company-name-small { display: none; }
 .sidebar-collapsed .sidebar-logo-compact { display: inline-flex; }
 .sidebar-collapsed .sidebar-toggle { align-self: center; margin-left: 0; }
 .sidebar-collapsed .sidebar-label { display: none; }
@@ -405,7 +405,7 @@ body {
   .sidebar-topbar,
   .sidebar-collapsed .sidebar-topbar { align-items: flex-start; flex-direction: column; }
   .sidebar-collapsed .sidebar-topbar { align-items: flex-start; }
-  .sidebar-collapsed .dashboard-sidebar .company-logo-small { display: block; max-width: 12.5rem; width: 12.5rem; }
+  .sidebar-collapsed .dashboard-sidebar .company-name-small { display: block; max-width: 12.5rem; width: 12.5rem; }
   .sidebar-collapsed .sidebar-logo-compact { display: none; }
   .sidebar-collapsed .sidebar-toggle { align-self: flex-start; margin-left: .5rem; }
   .sidebar-nav,
@@ -515,7 +515,7 @@ body {
 }
 
 /* Login: mais leve, colorido e coerente com o painel. */
-.auth-shell { background-color: #31515e; background-image: linear-gradient(115deg, rgba(20,45,57,.86) 0%, rgba(40,78,92,.69) 48%, rgba(82,123,66,.42) 100%), url("/dimoprop-house.jpg"); display: grid; min-height: 100dvh; place-items: center; padding: clamp(1rem, 3vw, 2rem); position: relative; }
+.auth-shell { background-color: #31515e; background-image: linear-gradient(115deg, #142d39 0%, #284e5c 48%, #527b42 100%); display: grid; min-height: 100dvh; place-items: center; padding: clamp(1rem, 3vw, 2rem); position: relative; }
 .auth-shell::before { background: radial-gradient(circle at 82% 20%, rgba(207,231,162,.45), transparent 0 18%), radial-gradient(circle at 77% 76%, rgba(159,199,228,.42), transparent 0 20%); content: ""; inset: 0; pointer-events: none; position: absolute; z-index: -1; }
 .auth-atmosphere { bottom: 0; color: rgba(243,248,248,.92); font-family: var(--font-display), sans-serif; font-size: clamp(3rem, 10vw, 8.5rem); font-weight: 800; letter-spacing: -.1em; line-height: .8; overflow: hidden; pointer-events: none; position: absolute; right: clamp(1.5rem, 8vw, 8rem); text-align: right; top: 0; width: min(49vw, 50rem); }
 .auth-atmosphere > span { bottom: clamp(3rem, 10vh, 8rem); opacity: .2; position: absolute; right: 0; transform: rotate(-8deg); }
@@ -524,7 +524,9 @@ body {
 .auth-atmosphere i:nth-of-type(3) { height: clamp(24rem, 46vw, 42rem); right: -16rem; top: -2%; width: clamp(24rem, 46vw, 42rem); }
 .auth-card { place-items: center; animation: soft-rise 500ms ease both; backdrop-filter: blur(14px); background: rgba(243,248,248,.94); border: 1px solid rgba(255,255,255,.75); border-radius: 1.5rem; box-shadow: 0 2rem 4.5rem rgba(10,33,43,.32); margin: 0 auto; max-width: 30rem; padding: clamp(1.7rem, 4vw, 3rem); width: min(100%, 30rem); z-index: 1; }
 .auth-brand { align-items: center; background: linear-gradient(135deg, #e1f0f4, #edf6dc); border: 1px solid rgba(38,83,104,.13); border-radius: .9rem; display: flex; justify-content: center; margin-bottom: 2rem; padding: .8rem 1rem; text-align: center; }
-.auth-brand .company-logo { display: block; margin: 0 auto; max-width: 13rem; }
+.company-name { color: #263b48; font-family: var(--font-display), sans-serif; font-size: 1.35rem; font-weight: 800; letter-spacing: .12em; }
+.company-name-small { color: var(--ink); font-size: 1rem; letter-spacing: .08em; }
+.auth-brand .company-name { display: block; margin: 0 auto; max-width: 13rem; }
 .auth-heading { text-align: center; }
 .auth-heading .eyebrow { background: #dcefd8; border-radius: 99px; color: #317d57; display: inline-block; letter-spacing: .08em; padding: .38rem .65rem; }
 .auth-heading h1 { color: var(--ink); font-size: clamp(2.4rem, 4vw, 3.65rem); margin: .8rem 0 .9rem; }
@@ -549,7 +551,7 @@ body {
 @media (max-width: 560px) {
   .auth-shell {
     align-items: center;
-    background-image: linear-gradient(160deg, rgba(16,35,43,.56), rgba(45,82,92,.2) 45%, rgba(18,38,44,.46)), url("/dimoprop-house.jpg");
+    background-image: linear-gradient(160deg, #10232b, #2d525c 45%, #12262c);
     height: 100dvh;
     justify-content: center;
     min-height: 100dvh;
@@ -583,7 +585,7 @@ body {
     width: 100%;
   }
 
-  .auth-brand .company-logo {
+  .auth-brand .company-name {
     max-width: 10.25rem;
   }
 
@@ -655,8 +657,8 @@ body {
     padding: 0;
   }
 
-  .dashboard-sidebar .company-logo-small,
-  .sidebar-collapsed .dashboard-sidebar .company-logo-small {
+  .dashboard-sidebar .company-name-small,
+  .sidebar-collapsed .dashboard-sidebar .company-name-small {
     max-width: 7.3rem;
     width: 7.3rem;
   }

@@ -13,13 +13,13 @@ npm run dev
 
 Abre [http://localhost:3000](http://localhost:3000) no navegador.
 
-Tambem podes iniciar o projeto a partir da pasta `C:\dimoprop` com o script PowerShell:
+Tambem podes iniciar o projeto com o script PowerShell da pasta principal:
 
 ```powershell
 .\run.ps1
 ```
 
-Ou abre `run.bat` com duplo clique. O script entra automaticamente em `obras-app`, instala as dependencias se necessario, abre o navegador em `http://localhost:3000` e inicia o frontend.
+O script entra automaticamente em `obras-app`, instala as dependencias se necessario, abre o navegador em `http://localhost:3000` e inicia o frontend.
 
 Comandos disponiveis:
 
@@ -34,7 +34,7 @@ npm start
 Em desenvolvimento, inicia o projeto uma vez e deixa o terminal aberto:
 
 ```powershell
-cd C:\dimoprop
+cd ..
 .\run.ps1
 ```
 
@@ -45,7 +45,6 @@ Os locais principais são:
 - `frontend/app/page.tsx`: dashboard, clientes, obras e faturas de demonstração;
 - `frontend/app/login/page.tsx`: formulário de login;
 - `frontend/app/globals.css`: cores, layout e aparência;
-- `frontend/public/dimoprop-logo.svg`: logótipo da Dimoprop usado no login e nas páginas principais;
 - `frontend/.env.local`: ligação ao Supabase, sem partilhar este ficheiro.
 
 ## Organizacao

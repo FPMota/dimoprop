@@ -1,7 +1,6 @@
 ﻿"use client";
 
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase/client";
 
@@ -309,18 +308,21 @@ async function loadDashboardDataFromDb() {
       amount: toNumber(payment.amount),
       date: buildDisplayDate(payment.payment_date),
     }));
+    const received = receivedPayments.reduce((total, payment) => total + payment.amount, 0);
+    const budget = toNumber(row.budget);
+    const progress = budget > 0 ? Math.min(Math.round((received / budget) * 100), 100) : 0;
 
     return {
       id: row.id,
       name: row.name,
       clientId: row.client_id ?? "",
       code: row.code,
-      progress: Number(row.progress ?? 0) || 0,
-      budget: toNumber(row.budget),
+      progress,
+      budget,
       extras: workInvoices
         .filter((invoice) => invoice.type === "extra")
         .reduce((total, invoice) => total + invoice.amount, 0),
-      received: receivedPayments.reduce((total, payment) => total + payment.amount, 0),
+      received,
       receivedPayments,
       color: buildWorkColor(index),
     } satisfies Work;
@@ -801,14 +803,7 @@ export default function Home() {
       <aside className="dashboard-sidebar">
         <div className="sidebar-topbar">
           <div className="brand-lockup">
-            <Image
-              className="company-logo company-logo-small"
-              src="/dimoprop-logo.svg"
-              alt="Dimoprop Construções e Remodelações"
-              width={720}
-              height={270}
-              priority
-            />
+            <span className="company-name company-name-small">DIMOPROP</span>
             <span className="sidebar-logo-compact" aria-hidden="true">
               D
             </span>

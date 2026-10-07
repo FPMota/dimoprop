@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import Image from "next/image";
 import { supabase } from "../../lib/supabase/client";
 
 export default function LoginPage() {
@@ -59,15 +58,7 @@ export default function LoginPage() {
       </div>
       <section className="auth-card">
         <div className="auth-brand">
-          <Image
-            className="company-logo"
-            src="/dimoprop-logo.svg"
-            alt="Dimoprop Construções e Remodelações"
-            width={720}
-            height={270}
-            priority
-            unoptimized
-          />
+          <span className="company-name">DIMOPROP</span>
         </div>
         <div className="auth-heading">
           <p className="eyebrow">Área de trabalho</p>
